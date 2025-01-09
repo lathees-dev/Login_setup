@@ -9,6 +9,9 @@ import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
 import Profile from './components/Profile';
 import StoryTelling from './components/StoryTelling';
+import StoryTellingOptions from './components/storyTelling/StoryTellingOptions';
+import StoryTellingTest from './components/storyTelling/StoryTellingTest';
+import StoryTellingLearn from './components/storyTelling/StoryTellingLearn';
 import { AppBar, Toolbar, Button, Container, Box } from '@mui/material';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -45,7 +48,10 @@ function App() {
               <Route path="/" element={<Login />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/profile" element={<Profile />} />
-              <Route path="/story-telling" element={<StoryTelling />} />
+              <Route path="/story-telling" element={<StoryTellingOptions />} />
+              <Route path="/story-telling/practice" element={<StoryTelling />} />
+              <Route path="/story-telling/learn" element={<StoryTellingLearn />} />
+              <Route path="/story-telling/test" element={<StoryTellingTest />} />
             </Routes>
           </Container>
         </Box>

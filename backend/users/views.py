@@ -24,7 +24,7 @@ import os
 # Set up logging
 logger = logging.getLogger(__name__)
 
-os.environ["GOOGLE_API_KEY"] = "AIzaSyBQhTgdeffYLYsH726KgHtvtF0i1YLjQ80"
+os.environ["GOOGLE_API_KEY"] = "AIzaSyBnAuc3Ooydn6lvbL9Ijpy8TDJuRxXZXyA"
 
 llm = ChatGoogleGenerativeAI(
     model="gemini-1.5-pro",
