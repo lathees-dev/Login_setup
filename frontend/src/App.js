@@ -8,13 +8,14 @@ import UserHome from './components/UserHome';
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
 import Profile from './components/Profile';
+import StoryTelling from './components/StoryTelling';
 import { AppBar, Toolbar, Button, Container, Box } from '@mui/material';
 import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   // Get current path
   const path = window.location.pathname;
-  const showNavBar = !['/user-home', '/admin-home', '/profile'].includes(path);
+  const showNavBar = !['/user-home', '/admin-home', '/profile', '/story-telling'].includes(path);
 
   return (
     <ErrorBoundary>
@@ -44,6 +45,7 @@ function App() {
               <Route path="/" element={<Login />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/story-telling" element={<StoryTelling />} />
             </Routes>
           </Container>
         </Box>

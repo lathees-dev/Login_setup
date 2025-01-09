@@ -1,215 +1,558 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Typography, Container, Avatar, IconButton, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { styled } from '@mui/material/styles';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import PersonIcon from '@mui/icons-material/Person';
-import DashboardIcon from '@mui/icons-material/Dashboard';
+import React, { useEffect, useState } from "react";
+import {
+  Box,
+  Typography,
+  IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Drawer,
+  List,
+  ListItem,
+} from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { styled } from "@mui/material/styles";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import PersonIcon from "@mui/icons-material/Person";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import StarIcon from "@mui/icons-material/Star";
+import LockIcon from "@mui/icons-material/Lock";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import { motion } from "framer-motion";
+import MenuIcon from "@mui/icons-material/Menu";
+import SmartToyIcon from "@mui/icons-material/SmartToy";
+import HomeIcon from "@mui/icons-material/Home";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 
-// Styled components
 const PageContainer = styled(Box)({
-  minHeight: '100vh',
-  backgroundColor: '#ffffff',
-  padding: '2rem 0',
+  minHeight: "100vh",
+  background: "linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%)",
+  padding: "2rem 0",
+  overflow: "auto",
 });
 
 const Header = styled(Box)({
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  padding: '0 2rem',
-  marginBottom: '3rem',
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  padding: "0 2rem",
+  marginBottom: "3rem",
+  color: "#333",
 });
 
-const GridContainer = styled(Box)({
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-  gap: '2rem',
-  padding: '0 2rem',
+const RoadmapContainer = styled(Box)({
+  position: "relative",
+  maxWidth: "600px",
+  margin: "0 auto",
+  padding: "2rem",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
 });
 
-const Card = styled(Box)({
-  backgroundColor: '#ffffff',
-  borderRadius: '12px',
-  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-  transition: 'transform 0.3s, box-shadow 0.3s',
-  cursor: 'pointer',
-  overflow: 'hidden',
-  '&:hover': {
-    transform: 'translateY(-5px)',
-    boxShadow: '0 6px 25px rgba(0, 0, 0, 0.12)',
+const MapPath = styled("svg")({
+  position: "absolute",
+  top: 0,
+  left: "50%",
+  transform: "translateX(-50%)",
+  height: "100%",
+  width: "100px",
+  zIndex: 0,
+  "& path": {
+    fill: "none",
+    stroke: "rgba(0, 0, 0, 0.2)",
+    strokeWidth: 8,
+    strokeLinecap: "round",
+    strokeDasharray: "0, 20",
   },
 });
 
-const CardImage = styled('img')({
-  width: '100%',
-  height: '200px',
-  objectFit: 'cover',
+const NodesContainer = styled(Box)({
+  position: "relative",
+  zIndex: 1,
+  display: "flex",
+  flexDirection: "column",
+  gap: "2rem",
+  alignItems: "center",
+  width: "100%",
 });
 
-const CardContent = styled(Box)({
-  padding: '1.5rem',
+const NodeWrapper = styled(Box)(({ position }) => ({
+  width: "100%",
+  display: "flex",
+  justifyContent: position === "left" ? "flex-end" : "flex-start",
+  paddingLeft: position === "left" ? 0 : "55%",
+  paddingRight: position === "left" ? "55%" : 0,
+}));
+
+const Node = styled(Box)(({ completed, locked, isTest }) => ({
+  position: "relative",
+  width: "150px",
+  height: "150px",
+  cursor: locked ? "not-allowed" : "pointer",
+  transition: "transform 0.3s, filter 0.3s",
+  filter: locked ? "grayscale(100%)" : "none",
+  opacity: locked ? 0.7 : 1,
+  "&:hover": {
+    transform: locked ? "none" : "scale(1.1)",
+  },
+}));
+
+const NodeCircle = styled(Box)(({ completed, isTest }) => ({
+  width: "100%",
+  height: "100%",
+  borderRadius: "50%",
+  background: isTest
+    ? "linear-gradient(45deg, #FF9600 30%, #FFB800 90%)"
+    : completed
+    ? "linear-gradient(45deg, #58CC02 30%, #76CF2B 90%)"
+    : "linear-gradient(45deg, #1CB0F6 30%, #38C5FF 90%)",
+  boxShadow: "0 8px 0 rgba(0,0,0,0.2)",
+  border: "5px solid #fff",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "#fff",
+  position: "relative",
+  padding: "10px",
+  overflow: "hidden",
+}));
+
+const NodeIcon = styled(Box)({
+  fontSize: "2.5rem",
+  marginBottom: "0.5rem",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
 });
 
-const CardTitle = styled(Typography)({
-  fontSize: '1.25rem',
-  fontWeight: '600',
-  color: '#2c3e50',
-  marginBottom: '0.5rem',
+const NodeTitle = styled(Typography)({
+  fontSize: "0.9rem",
+  textAlign: "center",
+  fontWeight: "bold",
+  padding: "0 0.5rem",
+  color: "#fff",
+  wordWrap: "break-word",
+  maxWidth: "100%",
+  lineHeight: 1.2,
 });
 
-const CardDescription = styled(Typography)({
-  color: '#666666',
-  fontSize: '0.9rem',
+const StarsContainer = styled(Box)({
+  position: "absolute",
+  top: "-30px",
+  left: "50%",
+  transform: "translateX(-50%)",
+  display: "flex",
+  gap: "5px",
 });
 
-const items = [
+const Star = styled(StarIcon)(({ filled }) => ({
+  color: filled ? "#ffd700" : "#ffffff44",
+  fontSize: "1.6rem",
+}));
+
+const LevelNumber = styled(Typography)({
+  position: "absolute",
+  top: "-25px",
+  left: "50%",
+  transform: "translateX(-50%)",
+  background: "#fff",
+  borderRadius: "50%",
+  width: "24px",
+  height: "24px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "0.8rem",
+  fontWeight: "bold",
+  color: "#1a237e",
+});
+
+const LevelBadge = styled(Box)({
+  position: "absolute",
+  top: "-10px",
+  left: "-10px",
+  width: "30px",
+  height: "30px",
+  borderRadius: "50%",
+  background: "#fff",
+  color: "#58CC02",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontWeight: "bold",
+  fontSize: "0.9rem",
+  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+});
+
+const AnimatedNode = motion(Node);
+const nodeVariants = {
+  initial: { scale: 0 },
+  animate: { scale: 1 },
+  hover: { scale: 1.1 },
+};
+
+const roadmapData = [
   {
-    title: 'Communication',
-    description: 'Master effective communication techniques',
-    image: 'https://via.placeholder.com/400x200?text=Communication',
-    link: '/communication'
+    id: 1,
+    title: "Introduction to Communication",
+    completed: true,
+    stars: 3,
+    position: "left",
   },
   {
-    title: 'Self Introduction',
-    description: 'Learn to present yourself professionally',
-    image: 'https://via.placeholder.com/400x200?text=Self+Introduction',
-    link: '/self-intro'
+    id: 2,
+    title: "Grammar / Sentence Framing",
+    completed: true,
+    stars: 2,
+    position: "right",
   },
   {
-    title: 'Presentation Skills',
-    description: 'Develop impactful presentation abilities',
-    image: 'https://via.placeholder.com/400x200?text=Presentation',
-    link: '/presentation'
+    id: 3,
+    title: "Vocabulary Development",
+    completed: false,
+    stars: 0,
+    position: "left",
   },
   {
-    title: 'Resume Building',
-    description: 'Create compelling professional resumes',
-    image: 'https://via.placeholder.com/400x200?text=Resume',
-    link: '/resume'
+    id: 4,
+    title: "Conversational Skills",
+    completed: false,
+    locked: true,
+    position: "right",
   },
   {
-    title: 'Group Discussion',
-    description: 'Excel in group discussions and team activities',
-    image: 'https://via.placeholder.com/400x200?text=Group+Discussion',
-    link: '/gd'
+    id: 5,
+    title: "Scenario based self intro",
+    locked: true,
+    position: "left",
   },
   {
-    title: 'BMC Pitching',
-    description: 'Presenting your business idea using the Business Model Canvas.',
-    image: 'https://via.placeholder.com/400x200?text=BMC+Pitching',
-    link: '/BMC_Pitching'
+    id: 6,
+    title: "Storytelling Techniques",
+    locked: false,
+    position: "right",
+    link: '/story-telling'
   },
   {
-    title: 'Networking',
-    description: 'Building connections to exchange ideas and opportunities.',
-    image: 'https://via.placeholder.com/400x200?text=Networking',
-    link: '/Networking'
+    id: 7,
+    title: "Public Speaking Basics",
+    locked: true,
+    position: "left",
   },
   {
-    title: 'Outfit',
-    description: ' Dressing professionally to make a strong impression.',
-    image: 'https://via.placeholder.com/400x200?text=Outfit',
-    link: '/outfit'
+    id: 8,
+    title: "Self Intro Basics",
+    locked: true,
+    position: "right",
   },
   {
-    title: 'Interview',
-    description: 'Excel in group discussions and team activities',
-    image: 'https://via.placeholder.com/400x200?text=Interview',
-    link: '/Interview'
-  }
+    id: 9,
+    title: "Video Resume Creation",
+    locked: true,
+    position: "left",
+    link: "/video-resume",
+  },
+  {
+    id: 10,
+    title: "Group Discussion Skills",
+    locked: true,
+    position: "right",
+  },
+  {
+    id: 11,
+    title: "Debate Basics",
+    locked: true,
+    position: "left",
+  },
+  {
+    id: 12,
+    title: "Written Communication",
+    locked: true,
+    position: "right",
+  },
+  {
+    id: 13,
+    title: "Networking Etiquette",
+    locked: true,
+    position: "left",
+  },
+  {
+    id: 14,
+    title: "LinkedIn Training",
+    locked: true,
+    position: "right",
+  },
+  {
+    id: 15,
+    title: "Personal Presentation",
+    locked: true,
+    position: "left",
+  },
+  {
+    id: 16,
+    title: "Memory Activities",
+    locked: true,
+    position: "right",
+  },
+  {
+    id: 17,
+    title: "Personal Branding",
+    locked: true,
+    position: "left",
+  },
+  {
+    id: 18,
+    title: "Resume Creation",
+    locked: true,
+    position: "right",
+  },
+  {
+    id: 19,
+    title: "Presentation Skills",
+    locked: true,
+    position: "left",
+  },
+  {
+    id: 20,
+    title: "BMC Pitching",
+    locked: true,
+    position: "right",
+  },
+  {
+    id: 21,
+    title: "Mock Interview",
+    locked: true,
+    position: "left",
+  },
+  {
+    id: 22,
+    title: "Speed Networking",
+    locked: true,
+    position: "right",
+  },
+  {
+    id: 23,
+    title: "Speed Interview",
+    locked: true,
+    position: "left",
+  },
+  {
+    id: 24,
+    title: "Final Test",
+    isTest: true,
+    locked: true,
+    position: "right",
+  },
 ];
+
+const Sidebar = styled(Drawer)(({ open }) => ({
+  "& .MuiDrawer-paper": {
+    width: open ? 240 : 70,
+    boxSizing: "border-box",
+    backgroundColor: "#fff",
+    borderRight: "1px solid rgba(0, 0, 0, 0.12)",
+    transition: "width 0.3s ease",
+    overflowX: "hidden",
+    whiteSpace: "nowrap",
+    position: "fixed",
+  },
+  "& .MuiDrawer-root": {
+    position: "relative",
+  },
+}));
+
+const SidebarItem = styled(ListItem)({
+  padding: "12px 16px",
+  cursor: "pointer",
+  "&:hover": {
+    backgroundColor: "rgba(0, 0, 0, 0.04)",
+  },
+  display: "flex",
+  gap: "12px",
+  alignItems: "center",
+});
+
+const MainContent = styled(Box)(({ open }) => ({
+  marginLeft: open ? "240px" : "70px",
+  width: open ? "calc(100% - 240px)" : "calc(100% - 70px)",
+  transition: "margin 0.3s ease, width 0.3s ease",
+}));
+
+const ProfileSection = styled(Box)({
+  padding: "1rem",
+  display: "flex",
+  alignItems: "center",
+  gap: "0.5rem",
+  borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+  justifyContent: "space-between",
+  minHeight: "72px",
+  width: "100%",
+});
 
 const UserHome = () => {
   const [user, setUser] = useState(null);
-  const [anchorEl, setAnchorEl] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const userInfo = localStorage.getItem('userInfo');
+    const userInfo = localStorage.getItem("userInfo");
     if (!userInfo) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
     const parsedUser = JSON.parse(userInfo);
-    if (parsedUser.user_type === 'admin') {
-      navigate('/admin-home');
+    if (parsedUser.user_type === "admin") {
+      navigate("/admin-home");
       return;
     }
     setUser(parsedUser);
   }, [navigate]);
 
-  const handleProfileClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
+  const renderNode = (item) => (
+    <NodeWrapper position={item.position}>
+      <AnimatedNode
+        variants={nodeVariants}
+        initial="initial"
+        animate="animate"
+        whileHover="hover"
+        completed={item.completed}
+        locked={item.locked}
+        isTest={item.isTest}
+        onClick={() => {
+          if (!item.locked && item.link) {
+            navigate(item.link);
+          }
+        }}
+        sx={{ cursor: item.locked ? 'not-allowed' : 'pointer' }}
+      >
+        <NodeCircle completed={item.completed} isTest={item.isTest}>
+          {!item.isTest && (
+            <StarsContainer>
+              {[1, 2, 3].map((star) => (
+                <Star key={star} filled={star <= item.stars} />
+              ))}
+            </StarsContainer>
+          )}
+          <NodeIcon>
+            {item.locked ? (
+              <LockIcon />
+            ) : item.isTest ? (
+              <EmojiEventsIcon sx={{ fontSize: "2rem" }} />
+            ) : (
+              item.icon || <StarIcon />
+            )}
+          </NodeIcon>
+          <NodeTitle>{item.title}</NodeTitle>
+        </NodeCircle>
+      </AnimatedNode>
+    </NodeWrapper>
+  );
 
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleMenuItemClick = (path) => {
-    handleClose();
-    navigate(path);
-  };
+  const sidebarItems = [
+    {
+      icon: <HomeIcon />,
+      text: "Home",
+      onClick: () => navigate("/user-home"),
+    },
+    {
+      icon: <SmartToyIcon />,
+      text: "AI Trainer",
+      onClick: () => navigate("/ai-trainer"),
+    },
+    {
+      icon: <PersonIcon />,
+      text: "Profile Info",
+      onClick: () => navigate("/profile"),
+    },
+    {
+      icon: <DashboardIcon />,
+      text: "Dashboard",
+      onClick: () => navigate("/dashboard"),
+    },
+  ];
 
   if (!user) return null;
 
-  const firstName = user.name.split(' ')[0];
+  const firstName = user.name.split(" ")[0];
 
   return (
-    <PageContainer>
-      <Header>
-        <Box>
-          <Typography variant="h4" sx={{ color: '#2c3e50', fontWeight: '600' }}>
-            AI Trainer
-          </Typography>
-          <Typography variant="h6" sx={{ color: '#666666', mt: 1 }}>
-            Welcome, {firstName}!
-          </Typography>
-        </Box>
-        <IconButton onClick={handleProfileClick} size="large">
-          <AccountCircleIcon sx={{ fontSize: 40, color: '#2c3e50' }} />
-        </IconButton>
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={handleClose}
-          anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'right',
-          }}
-          transformOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
-          }}
-        >
-          <MenuItem onClick={() => handleMenuItemClick('/profile')}>
-            <ListItemIcon>
-              <PersonIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Profile Info</ListItemText>
-          </MenuItem>
-          <MenuItem onClick={() => handleMenuItemClick('/dashboard')}>
-            <ListItemIcon>
-              <DashboardIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Dashboard</ListItemText>
-          </MenuItem>
-        </Menu>
-      </Header>
+    <Box display="flex">
+      <Sidebar variant="permanent" open={isSidebarOpen} anchor="left">
+        <ProfileSection>
+          <Box display="flex" alignItems="center" gap={1}>
+            <IconButton size="large">
+              <AccountCircleIcon sx={{ fontSize: 40, color: "#00796b" }} />
+            </IconButton>
+            {isSidebarOpen && (
+              <Typography variant="subtitle1" noWrap>
+                {firstName}
+            </Typography>
+            )}
+          </Box>
+          <IconButton
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            sx={{
+              minWidth: "40px",
+              visibility: "visible",
+              position: "absolute",
+              right: "8px",
+            }}
+          >
+            {isSidebarOpen ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+          </IconButton>
+        </ProfileSection>
+        <List>
+          {sidebarItems.map((item, index) => (
+            <SidebarItem key={index} onClick={item.onClick}>
+              {item.icon}
+              {isSidebarOpen && (
+                <Typography
+                  sx={{
+                    opacity: isSidebarOpen ? 1 : 0,
+                    transition: "opacity 0.3s ease",
+                  }}
+                >
+                  {item.text}
+            </Typography>
+              )}
+            </SidebarItem>
+          ))}
+        </List>
+      </Sidebar>
 
-      <GridContainer>
-        {items.map((item, index) => (
-          <Card key={index} onClick={() => navigate(item.link)}>
-            <CardImage src={item.image} alt={item.title} />
-            <CardContent>
-              <CardTitle>{item.title}</CardTitle>
-              <CardDescription>{item.description}</CardDescription>
-            </CardContent>
-          </Card>
-        ))}
-      </GridContainer>
-    </PageContainer>
+      <MainContent open={isSidebarOpen}>
+        <PageContainer>
+          <Header>
+            <Box>
+              <Typography
+                variant="h4"
+                sx={{ color: "#00796b", fontWeight: "600" }}
+              >
+                Communication Training Roadmap
+              </Typography>
+              <Typography variant="h6" sx={{ color: "#666666", mt: 1 }}>
+                Welcome, {firstName}!
+              </Typography>
+            </Box>
+          </Header>
+          <RoadmapContainer>
+            <MapPath>
+              <path
+                d="M50,0 Q60,50 40,100 Q60,150 40,200 Q60,250 40,300 Q60,350 40,400 Q60,450 40,500 Q60,550 40,600"
+                // Zigzag path
+              />
+            </MapPath>
+            <NodesContainer>
+              {roadmapData.map((item) => renderNode(item))}
+            </NodesContainer>
+          </RoadmapContainer>
+        </PageContainer>
+      </MainContent>
+    </Box>
   );
 };
 
