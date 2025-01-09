@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Formik, Form, Field } from 'formik';
 import * as Yup from 'yup';
 import axios from '../config/axios';
@@ -11,11 +11,17 @@ import {
   Link as MuiLink,
   Tabs,
   Tab,
+  CircularProgress,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { styled } from '@mui/material/styles';
+import OTPVerification from './OTPVerification';
 
 const SignupSchema = Yup.object().shape({
-  name: Yup.string().required('Required'),
+  first_name: Yup.string().required('Required'),
+  last_name: Yup.string().required('Required'),
   email: Yup.string().email('Invalid email').required('Required'),
   mobile_number: Yup.string()
     .matches(/^[0-9]{10}$/, 'Phone number must be 10 digits')
@@ -32,81 +38,60 @@ const SignupSchema = Yup.object().shape({
     .required('Required'),
 });
 
+const OTPContainer = styled(Box)({
+  display: 'flex',
+  alignItems: 'center',
+  gap: '1rem',
+  marginTop: '1rem',
+});
+
+const TimerText = styled(Typography)({
+  color: '#666',
+  fontSize: '0.9rem',
+});
+
+const ResendButton = styled(Button)({
+  minWidth: 'auto',
+});
+
 const Signup = () => {
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const [userType, setUserType] = useState('user');
   const [isEmailVerified, setIsEmailVerified] = useState(false);
-  const [showOtpField, setShowOtpField] = useState(false);
-  const [otp, setOtp] = useState('');
-  const [verificationError, setVerificationError] = useState('');
   const [isMobileVerified, setIsMobileVerified] = useState(false);
-  const [showMobileOtpField, setShowMobileOtpField] = useState(false);
-  const [mobileOtp, setMobileOtp] = useState('');
+  const [verificationError, setVerificationError] = useState('');
   const [mobileVerificationError, setMobileVerificationError] = useState('');
+  
+  // Add snackbar state
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
 
   const handleTabChange = (event, newValue) => {
     setUserType(newValue);
     setError('');
   };
 
-  const handleSendOtp = async (email) => {
-    try {
-      setVerificationError('');
-      await axios.post('/api/send-signup-otp/', { email });
-      setShowOtpField(true);
-      alert('OTP sent to your email!');
-    } catch (error) {
-      setVerificationError(error.response?.data?.error || 'Failed to send OTP');
-    }
-  };
-
-  const handleVerifyOtp = async (email) => {
-    try {
-      setVerificationError('');
-      await axios.post('/api/verify-signup-otp/', { 
-        email, 
-        otp 
-      });
-      setIsEmailVerified(true);
-      setShowOtpField(false);
-      alert('Email verified successfully!');
-    } catch (error) {
-      setVerificationError(error.response?.data?.error || 'Failed to verify OTP');
-    }
-  };
-
-  const handleSendMobileOtp = async (mobile_number, email) => {
-    try {
-      setMobileVerificationError('');
-      await axios.post('/api/send-mobile-otp/', { 
-        mobile_number,
-        email // Include email for testing purposes
-      });
-      setShowMobileOtpField(true);
-      alert('OTP sent to your mobile number!');
-    } catch (error) {
-      setMobileVerificationError(error.response?.data?.error || 'Failed to send OTP');
-    }
-  };
-
-  const handleVerifyMobileOtp = async (mobile_number) => {
-    try {
-      setMobileVerificationError('');
-      await axios.post('/api/verify-mobile-otp/', { 
-        mobile_number, 
-        otp: mobileOtp 
-      });
-      setIsMobileVerified(true);
-      setShowMobileOtpField(false);
-      alert('Mobile number verified successfully!');
-    } catch (error) {
-      setMobileVerificationError(error.response?.data?.error || 'Failed to verify OTP');
-    }
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
   };
 
   return (
     <Container maxWidth="sm">
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={6000} 
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+
       <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Typography component="h1" variant="h5">
           Sign Up
@@ -127,7 +112,8 @@ const Signup = () => {
 
         <Formik
           initialValues={{
-            name: '',
+            first_name: '',
+            last_name: '',
             email: '',
             mobile_number: '',
             password: '',
@@ -137,19 +123,32 @@ const Signup = () => {
           onSubmit={async (values, { setSubmitting }) => {
             try {
               if (!isEmailVerified) {
-                alert('Please verify your email first');
+                setSnackbar({
+                  open: true,
+                  message: 'Please verify your email first',
+                  severity: 'error'
+                });
                 return;
               }
               if (!isMobileVerified) {
-                alert('Please verify your mobile number first');
+                setSnackbar({
+                  open: true,
+                  message: 'Please verify your mobile number first',
+                  severity: 'error'
+                });
                 return;
               }
               setError('');
               await axios.post('/api/register/', {
                 ...values,
+                name: `${values.first_name} ${values.last_name}`,
                 user_type: userType
               });
-              alert(`${userType === 'admin' ? 'Admin' : 'User'} registered successfully!`);
+              setSnackbar({
+                open: true,
+                message: `${userType === 'admin' ? 'Admin' : 'User'} registered successfully!`,
+                severity: 'success'
+              });
               navigate('/login');
             } catch (error) {
               setError(error.response?.data?.error || 'Registration failed');
@@ -157,61 +156,62 @@ const Signup = () => {
             setSubmitting(false);
           }}
         >
-          {({ errors, touched, isSubmitting, values }) => (
+          {({ errors, touched, isSubmitting, values, handleChange }) => (
             <Form>
-              <Field
-                as={TextField}
-                fullWidth
-                margin="normal"
-                name="name"
-                label="Name"
-                error={touched.name && errors.name}
-                helperText={touched.name && errors.name}
-              />
-              
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+              <Box sx={{ display: 'flex', gap: 2 }}>
                 <Field
                   as={TextField}
                   fullWidth
                   margin="normal"
-                  name="email"
-                  label="Email"
-                  error={touched.email && errors.email}
-                  helperText={touched.email && errors.email}
-                  disabled={isEmailVerified}
+                  name="first_name"
+                  label="First Name"
+                  error={touched.first_name && errors.first_name}
+                  helperText={touched.first_name && errors.first_name}
                 />
-                {!isEmailVerified && (
-                  <Button
-                    variant="contained"
-                    sx={{ mt: 2 }}
-                    onClick={() => handleSendOtp(values.email)}
-                    disabled={!values.email || errors.email}
-                  >
-                    Verify Email
-                  </Button>
-                )}
+                
+                <Field
+                  as={TextField}
+                  fullWidth
+                  margin="normal"
+                  name="last_name"
+                  label="Last Name"
+                  error={touched.last_name && errors.last_name}
+                  helperText={touched.last_name && errors.last_name}
+                />
               </Box>
-
-              {showOtpField && (
-                <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Enter Email OTP"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                  />
-                  <Button
-                    variant="contained"
-                    sx={{ mt: 2 }}
-                    onClick={() => handleVerifyOtp(values.email)}
-                  >
-                    Submit OTP
-                  </Button>
-                </Box>
+              
+              <Field
+                as={TextField}
+                fullWidth
+                margin="normal"
+                name="email"
+                label="Email"
+                error={touched.email && errors.email}
+                helperText={touched.email && errors.email}
+                disabled={isEmailVerified}
+                onChange={(e) => {
+                  handleChange(e);
+                  localStorage.setItem('tempEmail', e.target.value);
+                }}
+              />
+              {!isEmailVerified && values.email && !errors.email && (
+                <OTPVerification
+                  type="email"
+                  identifier={values.email}
+                  onVerify={(success) => {
+                    if (success) {
+                      setIsEmailVerified(true);
+                      setSnackbar({
+                        open: true,
+                        message: 'Email verified successfully',
+                        severity: 'success'
+                      });
+                    }
+                  }}
+                />
               )}
 
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+              <Box sx={{ mb: 2 }}>
                 <Field
                   as={TextField}
                   fullWidth
@@ -222,36 +222,23 @@ const Signup = () => {
                   helperText={touched.mobile_number && errors.mobile_number}
                   disabled={isMobileVerified}
                 />
-                {!isMobileVerified && (
-                  <Button
-                    variant="contained"
-                    sx={{ mt: 2 }}
-                    onClick={() => handleSendMobileOtp(values.mobile_number, values.email)}
-                    disabled={!values.mobile_number || errors.mobile_number || !isEmailVerified}
-                  >
-                    Verify Mobile
-                  </Button>
+                {!isMobileVerified && values.mobile_number && !errors.mobile_number && (
+                  <OTPVerification
+                    type="mobile"
+                    identifier={values.mobile_number}
+                    onVerify={(success) => {
+                      if (success) {
+                        setIsMobileVerified(true);
+                        setSnackbar({
+                          open: true,
+                          message: 'Mobile number verified successfully',
+                          severity: 'success'
+                        });
+                      }
+                    }}
+                  />
                 )}
               </Box>
-
-              {showMobileOtpField && (
-                <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Enter Mobile OTP"
-                    value={mobileOtp}
-                    onChange={(e) => setMobileOtp(e.target.value)}
-                  />
-                  <Button
-                    variant="contained"
-                    sx={{ mt: 2 }}
-                    onClick={() => handleVerifyMobileOtp(values.mobile_number)}
-                  >
-                    Submit OTP
-                  </Button>
-                </Box>
-              )}
 
               {verificationError && (
                 <Typography color="error" sx={{ mt: 1 }}>

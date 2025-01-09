@@ -1,121 +1,128 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Container, IconButton, Button } from '@mui/material';
+import { Box, Typography, Container, Avatar, IconButton, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { styled } from '@mui/material/styles';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
-import LogoutIcon from '@mui/icons-material/Logout';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import PersonIcon from '@mui/icons-material/Person';
+import DashboardIcon from '@mui/icons-material/Dashboard';
 
 // Styled components
-const SliderContainer = styled(Box)({
-  position: 'relative',
-  padding: '20px 0',
-  '&:hover .slider-arrow': {
-    opacity: 1,
-  },
-});
-
-const SliderWrapper = styled(Box)({
-  display: 'flex',
-  overflowX: 'hidden',
-  scrollBehavior: 'smooth',
-  '&::-webkit-scrollbar': {
-    display: 'none',
-  },
-});
-
-const SliderCard = styled(Box)({
-  minWidth: '200px',
-  height: '150px',
-  margin: '0 10px',
-  position: 'relative',
-  backgroundColor: '#1e1e1e',
-  borderRadius: '8px',
-  transition: 'transform 0.3s, box-shadow 0.3s',
-  cursor: 'pointer',
-  '&:hover': {
-    transform: 'scale(1.05)',
-    boxShadow: '0 5px 15px rgba(0, 0, 0, 0.3)',
-    '& .card-title': {
-      backgroundColor: 'rgb(105, 163, 226)',
-    },
-  },
-});
-
-const CardImage = styled('img')({
-  width: '100%',
-  height: '100%',
-  objectFit: 'cover',
-  borderRadius: '8px',
-});
-
-const CardTitle = styled(Typography)({
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  right: 0,
-  padding: '10px',
-  background: 'rgba(0, 0, 0, 0.7)',
-  color: '#fff',
-  fontSize: '16px',
-  fontWeight: 'bold',
-  textAlign: 'center',
-  borderBottomLeftRadius: '8px',
-  borderBottomRightRadius: '8px',
-  transition: 'background-color 0.3s',
-});
-
-const SliderArrow = styled(IconButton)({
-  position: 'absolute',
-  top: '50%',
-  transform: 'translateY(-50%)',
-  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  color: '#fff',
-  opacity: 0,
-  transition: 'opacity 0.3s',
-  '&:hover': {
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-  },
-  zIndex: 1,
+const PageContainer = styled(Box)({
+  minHeight: '100vh',
+  backgroundColor: '#ffffff',
+  padding: '2rem 0',
 });
 
 const Header = styled(Box)({
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
-  padding: '20px 0',
-  marginBottom: '20px',
+  padding: '0 2rem',
+  marginBottom: '3rem',
 });
 
-const categories = [
+const GridContainer = styled(Box)({
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+  gap: '2rem',
+  padding: '0 2rem',
+});
+
+const Card = styled(Box)({
+  backgroundColor: '#ffffff',
+  borderRadius: '12px',
+  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+  transition: 'transform 0.3s, box-shadow 0.3s',
+  cursor: 'pointer',
+  overflow: 'hidden',
+  '&:hover': {
+    transform: 'translateY(-5px)',
+    boxShadow: '0 6px 25px rgba(0, 0, 0, 0.12)',
+  },
+});
+
+const CardImage = styled('img')({
+  width: '100%',
+  height: '200px',
+  objectFit: 'cover',
+});
+
+const CardContent = styled(Box)({
+  padding: '1.5rem',
+});
+
+const CardTitle = styled(Typography)({
+  fontSize: '1.25rem',
+  fontWeight: '600',
+  color: '#2c3e50',
+  marginBottom: '0.5rem',
+});
+
+const CardDescription = styled(Typography)({
+  color: '#666666',
+  fontSize: '0.9rem',
+});
+
+const items = [
   {
-    title: 'Communication Skills',
-    items: [
-      { title: 'Communication', image: 'https://via.placeholder.com/200x150?text=Communication', link: '/communication' },
-      { title: 'Self Intro', image: 'https://via.placeholder.com/200x150?text=Self+Intro', link: '/self-intro' },
-      { title: 'Presentation', image: 'https://via.placeholder.com/200x150?text=Presentation', link: '/presentation' },
-    ]
+    title: 'Communication',
+    description: 'Master effective communication techniques',
+    image: 'https://via.placeholder.com/400x200?text=Communication',
+    link: '/communication'
   },
   {
-    title: 'Professional Development',
-    items: [
-      { title: 'Resume', image: 'https://via.placeholder.com/200x150?text=Resume', link: '/resume' },
-      { title: 'Interview', image: 'https://via.placeholder.com/200x150?text=Interview', link: '/interview' },
-      { title: 'GD', image: 'https://via.placeholder.com/200x150?text=Group+Discussion', link: '/gd' },
-    ]
+    title: 'Self Introduction',
+    description: 'Learn to present yourself professionally',
+    image: 'https://via.placeholder.com/400x200?text=Self+Introduction',
+    link: '/self-intro'
   },
   {
-    title: 'Business Skills',
-    items: [
-      { title: 'BMC Pitching', image: 'https://via.placeholder.com/200x150?text=BMC+Pitiching', link: '/bmc-pitching' },
-      { title: 'Networking', image: 'https://via.placeholder.com/200x150?text=Networking', link: '/networking' },
-      { title: 'Outfit', image: 'https://via.placeholder.com/200x150?text=Outfit', link: '/outfit' },
-    ]
+    title: 'Presentation Skills',
+    description: 'Develop impactful presentation abilities',
+    image: 'https://via.placeholder.com/400x200?text=Presentation',
+    link: '/presentation'
+  },
+  {
+    title: 'Resume Building',
+    description: 'Create compelling professional resumes',
+    image: 'https://via.placeholder.com/400x200?text=Resume',
+    link: '/resume'
+  },
+  {
+    title: 'Group Discussion',
+    description: 'Excel in group discussions and team activities',
+    image: 'https://via.placeholder.com/400x200?text=Group+Discussion',
+    link: '/gd'
+  },
+  {
+    title: 'BMC Pitching',
+    description: 'Presenting your business idea using the Business Model Canvas.',
+    image: 'https://via.placeholder.com/400x200?text=BMC+Pitching',
+    link: '/BMC_Pitching'
+  },
+  {
+    title: 'Networking',
+    description: 'Building connections to exchange ideas and opportunities.',
+    image: 'https://via.placeholder.com/400x200?text=Networking',
+    link: '/Networking'
+  },
+  {
+    title: 'Outfit',
+    description: ' Dressing professionally to make a strong impression.',
+    image: 'https://via.placeholder.com/400x200?text=Outfit',
+    link: '/outfit'
+  },
+  {
+    title: 'Interview',
+    description: 'Excel in group discussions and team activities',
+    image: 'https://via.placeholder.com/400x200?text=Interview',
+    link: '/Interview'
   }
 ];
 
 const UserHome = () => {
   const [user, setUser] = useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -132,82 +139,77 @@ const UserHome = () => {
     setUser(parsedUser);
   }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('userInfo');
-    navigate('/login');
+  const handleProfileClick = (event) => {
+    setAnchorEl(event.currentTarget);
   };
 
-  const scroll = (elementId, direction) => {
-    const container = document.getElementById(elementId);
-    const scrollAmount = 400; // Adjust scroll amount as needed
-    container.scrollLeft += direction * scrollAmount;
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleMenuItemClick = (path) => {
+    handleClose();
+    navigate(path);
   };
 
   if (!user) return null;
 
+  const firstName = user.name.split(' ')[0];
+
   return (
-    <Box sx={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#121212', 
-      color: '#fff',
-      py: 4 
-    }}>
-      <Container maxWidth="xl">
-        <Header>
-          <Box>
-            <Typography variant="h4" component="h1">
-              AI Trainer
-            </Typography>
-            <Typography variant="subtitle1" sx={{ mt: 1 }}>
-              Welcome, {user.name}!
-            </Typography>
-          </Box>
-          <Button 
-            variant="contained" 
-            color="error" 
-            startIcon={<LogoutIcon />}
-            onClick={handleLogout}
-          >
-            Logout
-          </Button>
-        </Header>
+    <PageContainer>
+      <Header>
+        <Box>
+          <Typography variant="h4" sx={{ color: '#2c3e50', fontWeight: '600' }}>
+            AI Trainer
+          </Typography>
+          <Typography variant="h6" sx={{ color: '#666666', mt: 1 }}>
+            Welcome, {firstName}!
+          </Typography>
+        </Box>
+        <IconButton onClick={handleProfileClick} size="large">
+          <AccountCircleIcon sx={{ fontSize: 40, color: '#2c3e50' }} />
+        </IconButton>
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleClose}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'right',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'right',
+          }}
+        >
+          <MenuItem onClick={() => handleMenuItemClick('/profile')}>
+            <ListItemIcon>
+              <PersonIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Profile Info</ListItemText>
+          </MenuItem>
+          <MenuItem onClick={() => handleMenuItemClick('/dashboard')}>
+            <ListItemIcon>
+              <DashboardIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Dashboard</ListItemText>
+          </MenuItem>
+        </Menu>
+      </Header>
 
-        {categories.map((category, categoryIndex) => (
-          <SliderContainer key={categoryIndex}>
-            <Typography variant="h5" sx={{ mb: 2, ml: 1 }}>
-              {category.title}
-            </Typography>
-
-            <SliderArrow
-              className="slider-arrow"
-              sx={{ left: 0 }}
-              onClick={() => scroll(`slider-${categoryIndex}`, -1)}
-            >
-              <ArrowBackIosIcon />
-            </SliderArrow>
-
-            <SliderWrapper id={`slider-${categoryIndex}`}>
-              {category.items.map((item, index) => (
-                <SliderCard key={index} onClick={() => navigate(item.link)}>
-                  <CardImage src={item.image} alt={item.title} />
-                  <CardTitle className="card-title">
-                    {item.title}
-                  </CardTitle>
-                </SliderCard>
-              ))}
-            </SliderWrapper>
-
-            <SliderArrow
-              className="slider-arrow"
-              sx={{ right: 0 }}
-              onClick={() => scroll(`slider-${categoryIndex}`, 1)}
-            >
-              <ArrowForwardIosIcon />
-            </SliderArrow>
-          </SliderContainer>
+      <GridContainer>
+        {items.map((item, index) => (
+          <Card key={index} onClick={() => navigate(item.link)}>
+            <CardImage src={item.image} alt={item.title} />
+            <CardContent>
+              <CardTitle>{item.title}</CardTitle>
+              <CardDescription>{item.description}</CardDescription>
+            </CardContent>
+          </Card>
         ))}
-      </Container>
-    </Box>
+      </GridContainer>
+    </PageContainer>
   );
 };
 

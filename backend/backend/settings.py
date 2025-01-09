@@ -76,13 +76,20 @@ STATIC_URL = 'static/'
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Add email settings for OTP
+# Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'harishrajd6@gmail.com'  # Your email
-EMAIL_HOST_PASSWORD = 'flpz mbcb kwma qnxt'  # Your app password
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# For debugging email issues
+if DEBUG:
+    EMAIL_DEBUG = True
+    import logging
+    logging.getLogger('django.mail').setLevel(logging.DEBUG)
 
 CACHES = {
     'default': {
