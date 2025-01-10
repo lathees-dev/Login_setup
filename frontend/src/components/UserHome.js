@@ -217,6 +217,7 @@ const roadmapData = [
     completed: true,
     stars: 2,
     position: "right",
+    link: "/grammar",
   },
   {
     id: 3,
@@ -224,6 +225,7 @@ const roadmapData = [
     completed: false,
     stars: 0,
     position: "left",
+    link: "/vocabulary",
   },
   {
     id: 4,

@@ -18,6 +18,11 @@ import AdminDashboard from "./components/admin/AdminDashboard";
 import RoadmapCustomization from "./components/admin/RoadmapCustomization";
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 import ProtectedUserRoute from "./components/ProtectedUserRoute";
+import CommunicationOptions from "./components/communication/CommunicationOptions";
+import VocabularyOptions from "./components/vocabulary/VocabularyOptions";
+import GrammarOptions from "./components/grammar/GrammarOptions";
+import VocabularyPractice from "./components/vocabulary/VocabularyPractice";
+import VocabularyTest from "./components/vocabulary/VocabularyTest";
 
 function App() {
   // Get current path
@@ -28,6 +33,9 @@ function App() {
     "/story-telling",
     "/admin/dashboard",
     "/admin/roadmap",
+    "/communication",
+    "/vocabulary",
+    "/grammar",
   ].includes(path);
 
   return (
@@ -105,6 +113,12 @@ function App() {
                 path="/story-telling/test"
                 element={<StoryTellingTest />}
               />
+              <Route path="/communication" element={<CommunicationOptions />} />
+              <Route path="/vocabulary" element={<VocabularyOptions />} />
+              <Route path="/vocabulary/VocabularyPractice" element={<VocabularyPractice />} />
+              <Route path="/vocabulary/test" element={<VocabularyTest />} />
+   
+              <Route path="/grammar" element={<GrammarOptions />} />
             </Routes>
           </Container>
         </Box>

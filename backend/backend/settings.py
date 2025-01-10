@@ -29,6 +29,8 @@ INSTALLED_APPS = [
     'admin_portal',
     'rest_framework',
     'communication',
+    'vocabulary',
+    'grammar',
 ]
 
 MIDDLEWARE = [
