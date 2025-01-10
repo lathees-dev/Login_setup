@@ -202,6 +202,7 @@ const roadmapData = [
     completed: true,
     stars: 3,
     position: "left",
+    link: "/communication",
   },
   {
     id: 2,

@@ -12,6 +12,7 @@ import StoryTelling from './components/StoryTelling';
 import StoryTellingOptions from './components/storyTelling/StoryTellingOptions';
 import StoryTellingTest from './components/storyTelling/StoryTellingTest';
 import StoryTellingLearn from './components/storyTelling/StoryTellingLearn';
+import CommunicationOptions from './components/communication/CommunicationOptions';
 import { AppBar, Toolbar, Button, Container, Box } from '@mui/material';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -52,6 +53,7 @@ function App() {
               <Route path="/story-telling/practice" element={<StoryTelling />} />
               <Route path="/story-telling/learn" element={<StoryTellingLearn />} />
               <Route path="/story-telling/test" element={<StoryTellingTest />} />
+              <Route path="/communication" element={<CommunicationOptions />} />
             </Routes>
           </Container>
         </Box>

@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'users',
     'storyTelling',
+    'communication',
 ]
 
 MIDDLEWARE = [
