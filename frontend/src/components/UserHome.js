@@ -3,13 +3,10 @@ import {
   Box,
   Typography,
   IconButton,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
   Drawer,
   List,
   ListItem,
+  Button,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { styled } from "@mui/material/styles";
@@ -20,11 +17,11 @@ import StarIcon from "@mui/icons-material/Star";
 import LockIcon from "@mui/icons-material/Lock";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import { motion } from "framer-motion";
-import MenuIcon from "@mui/icons-material/Menu";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 import HomeIcon from "@mui/icons-material/Home";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 const PageContainer = styled(Box)({
   minHeight: "100vh",
@@ -44,12 +41,13 @@ const Header = styled(Box)({
 
 const RoadmapContainer = styled(Box)({
   position: "relative",
-  maxWidth: "600px",
+  maxWidth: "800px",
   margin: "0 auto",
   padding: "2rem",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
+  minHeight: "500px",
 });
 
 const MapPath = styled("svg")({
@@ -85,6 +83,8 @@ const NodeWrapper = styled(Box)(({ position }) => ({
   justifyContent: position === "left" ? "flex-end" : "flex-start",
   paddingLeft: position === "left" ? 0 : "55%",
   paddingRight: position === "left" ? "55%" : 0,
+  position: "relative",
+  zIndex: 1,
 }));
 
 const Node = styled(Box)(({ completed, locked, isTest }) => ({
@@ -109,16 +109,23 @@ const NodeCircle = styled(Box)(({ completed, isTest }) => ({
     : completed
     ? "linear-gradient(45deg, #58CC02 30%, #76CF2B 90%)"
     : "linear-gradient(45deg, #1CB0F6 30%, #38C5FF 90%)",
-  boxShadow: "0 8px 0 rgba(0,0,0,0.2)",
-  border: "5px solid #fff",
+  boxShadow: `0 8px 16px rgba(0,0,0,0.1),
+              inset 0 -8px 0 ${
+                completed ? "rgba(0,0,0,0.2)" : "rgba(0,0,0,0.1)"
+              }`,
+  border: `5px solid ${completed ? "#fff" : "rgba(255,255,255,0.8)"}`,
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
   color: "#fff",
   position: "relative",
-  padding: "10px",
-  overflow: "hidden",
+  transition: "all 0.3s ease",
+  transform: completed ? "scale(1.05)" : "scale(1)",
+  "&:hover": {
+    transform: "scale(1.1)",
+    boxShadow: "0 12px 20px rgba(0,0,0,0.15)",
+  },
 }));
 
 const NodeIcon = styled(Box)({
@@ -235,7 +242,7 @@ const roadmapData = [
     title: "Storytelling Techniques",
     locked: false,
     position: "right",
-    link: '/story-telling'
+    link: "/story-telling",
   },
   {
     id: 7,
@@ -393,6 +400,76 @@ const ProfileSection = styled(Box)({
   width: "100%",
 });
 
+const PathSvg = styled("svg")({
+  position: "absolute",
+  top: 0,
+  left: 0,
+  width: "100%",
+  height: "100%",
+  zIndex: 0,
+  pointerEvents: "none",
+});
+
+const PathLine = styled("path")({
+  strokeWidth: "8px",
+  fill: "none",
+  strokeLinecap: "round",
+  transition: "stroke-dashoffset 1s ease",
+});
+
+const generatePathData = (nodes) => {
+  const pathPoints = nodes.map((_, index) => {
+    const y = index * 180; // Vertical spacing
+    const x = index % 2 === 0 ? 200 : 600; // Alternating x positions
+    return { x, y };
+  });
+
+  return pathPoints.reduce((path, point, index) => {
+    if (index === 0) return `M ${point.x} ${point.y}`;
+    const prevPoint = pathPoints[index - 1];
+    const controlPoint1X = prevPoint.x;
+    const controlPoint1Y = (prevPoint.y + point.y) / 2;
+    const controlPoint2X = point.x;
+    const controlPoint2Y = (prevPoint.y + point.y) / 2;
+    return `${path} C ${controlPoint1X} ${controlPoint1Y}, ${controlPoint2X} ${controlPoint2Y}, ${point.x} ${point.y}`;
+  }, "");
+};
+
+const renderNode = (item, index, totalNodes, navigate) => (
+  <NodeWrapper position={item.position} key={item.id}>
+    <AnimatedNode
+      variants={nodeVariants}
+      initial="initial"
+      animate="animate"
+      whileHover="hover"
+      completed={item.completed}
+      locked={item.locked}
+      isTest={item.isTest}
+      onClick={() => !item.locked && item.link && navigate(item.link)}
+    >
+      <NodeCircle completed={item.completed} isTest={item.isTest}>
+        {!item.isTest && (
+          <StarsContainer>
+            {[1, 2, 3].map((star) => (
+              <Star key={star} filled={star <= item.stars} />
+            ))}
+          </StarsContainer>
+        )}
+        <NodeIcon>
+          {item.locked ? (
+            <LockIcon />
+          ) : item.isTest ? (
+            <EmojiEventsIcon sx={{ fontSize: "2rem" }} />
+          ) : (
+            item.icon || <StarIcon />
+          )}
+        </NodeIcon>
+        <NodeTitle>{item.title}</NodeTitle>
+      </NodeCircle>
+    </AnimatedNode>
+  </NodeWrapper>
+);
+
 const UserHome = () => {
   const [user, setUser] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -411,46 +488,6 @@ const UserHome = () => {
     }
     setUser(parsedUser);
   }, [navigate]);
-
-  const renderNode = (item) => (
-    <NodeWrapper position={item.position}>
-      <AnimatedNode
-        variants={nodeVariants}
-        initial="initial"
-        animate="animate"
-        whileHover="hover"
-        completed={item.completed}
-        locked={item.locked}
-        isTest={item.isTest}
-        onClick={() => {
-          if (!item.locked && item.link) {
-            navigate(item.link);
-          }
-        }}
-        sx={{ cursor: item.locked ? 'not-allowed' : 'pointer' }}
-      >
-        <NodeCircle completed={item.completed} isTest={item.isTest}>
-          {!item.isTest && (
-            <StarsContainer>
-              {[1, 2, 3].map((star) => (
-                <Star key={star} filled={star <= item.stars} />
-              ))}
-            </StarsContainer>
-          )}
-          <NodeIcon>
-            {item.locked ? (
-              <LockIcon />
-            ) : item.isTest ? (
-              <EmojiEventsIcon sx={{ fontSize: "2rem" }} />
-            ) : (
-              item.icon || <StarIcon />
-            )}
-          </NodeIcon>
-          <NodeTitle>{item.title}</NodeTitle>
-        </NodeCircle>
-      </AnimatedNode>
-    </NodeWrapper>
-  );
 
   const sidebarItems = [
     {
@@ -475,6 +512,11 @@ const UserHome = () => {
     },
   ];
 
+  const handleLogout = () => {
+    localStorage.removeItem("userInfo");
+    navigate("/login");
+  };
+
   if (!user) return null;
 
   const firstName = user.name.split(" ")[0];
@@ -490,7 +532,7 @@ const UserHome = () => {
             {isSidebarOpen && (
               <Typography variant="subtitle1" noWrap>
                 {firstName}
-            </Typography>
+              </Typography>
             )}
           </Box>
           <IconButton
@@ -517,7 +559,7 @@ const UserHome = () => {
                   }}
                 >
                   {item.text}
-            </Typography>
+                </Typography>
               )}
             </SidebarItem>
           ))}
@@ -540,14 +582,26 @@ const UserHome = () => {
             </Box>
           </Header>
           <RoadmapContainer>
-            <MapPath>
-              <path
-                d="M50,0 Q60,50 40,100 Q60,150 40,200 Q60,250 40,300 Q60,350 40,400 Q60,450 40,500 Q60,550 40,600"
-                // Zigzag path
+            <PathSvg>
+              <PathLine
+                d={generatePathData(roadmapData)}
+                stroke="rgba(0, 0, 0, 0.1)"
               />
-            </MapPath>
+              <PathLine
+                d={generatePathData(roadmapData)}
+                stroke="#58CC02"
+                strokeDasharray="1000"
+                strokeDashoffset={
+                  1000 -
+                  (1000 * roadmapData.filter((item) => item.completed).length) /
+                    roadmapData.length
+                }
+              />
+            </PathSvg>
             <NodesContainer>
-              {roadmapData.map((item) => renderNode(item))}
+              {roadmapData.map((item, index) =>
+                renderNode(item, index, roadmapData.length, navigate)
+              )}
             </NodesContainer>
           </RoadmapContainer>
         </PageContainer>
