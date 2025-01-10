@@ -27,6 +27,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'users',
     'storyTelling',
+    'admin_portal',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [

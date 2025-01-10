@@ -17,7 +17,8 @@ import json
 from bson import ObjectId
 from django.contrib.auth.hashers import make_password
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_ollama.llms import OllamaLLM
+
+# from langchain_ollama.llms import OllamaLLM
 from langchain_core.prompts import ChatPromptTemplate
 import os
 
@@ -34,7 +35,8 @@ llm = ChatGoogleGenerativeAI(
     max_retries=2,
 )
 
-#llm = OllamaLLM(model="llama2")
+# llm = OllamaLLM(model="llama2")
+
 
 def send_email_otp(email, otp):
     """Send OTP via email"""
@@ -220,45 +222,49 @@ def register_user(request):
 @api_view(["POST"])
 def login_user(request):
     try:
-        logger.info("Login request data: %s", request.data)
         email = request.data.get("email")
         password = request.data.get("password")
-        user_type = request.data.get("user_type", "user")
 
-        if not email or not password:
-            return Response(
-                {"error": "Email and password are required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        # Check admin collection first
+        admin = admins_collection.find_one({"email": email})
+        if admin:
+            stored_password = admin.get("password", "")
+            if check_password(password, stored_password):
+                return Response(
+                    {
+                        "email": email,
+                        "token": "admin-token",
+                        "is_admin": True,
+                        "message": "Admin login successful",
+                        "id": str(admin["_id"]),
+                    }
+                )
 
-        user = CustomUser.get_user_by_email(email, user_type)
-        logger.info("Found user: %s", bool(user))
+        # Check regular users
+        user = users_collection.find_one({"email": email})
+        if user:
+            stored_password = user.get("password", "")
+            if check_password(password, stored_password):
+                return Response(
+                    {
+                        "email": email,
+                        "token": "user-token",
+                        "is_admin": False,
+                        "message": "User login successful",
+                        "id": str(user["_id"]),
+                        "name": user.get("name", ""),
+                    }
+                )
 
-        if not user:
-            return Response(
-                {"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Verify password using Django's check_password
-        if check_password(password, user["password"]):
-            response_data = {
-                "id": str(user["_id"]),
-                "name": user["name"],
-                "email": user["email"],
-                "user_type": user_type,
-                "mobile_number": user.get("mobile_number", ""),
-            }
-            logger.info("Login successful for user: %s", email)
-            return Response(response_data)
-
-        logger.warning("Invalid password for user: %s", email)
         return Response(
-            {"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST
+            {"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED
         )
+
     except Exception as e:
-        logger.error("Login error: %s", str(e), exc_info=True)
+        logger.error(f"Login error: {str(e)}")
         return Response(
-            {"error": "Login failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            {"error": "Something went wrong, please try again"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
 
@@ -726,9 +732,10 @@ def update_profile(request):
     except Exception as e:
         logger.error(f"Error updating profile: {str(e)}", exc_info=True)
         return Response(
-            {'error': 'Failed to update profile'}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            {"error": "Failed to update profile"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
 
 def analyze_story(story):
     try:
@@ -737,21 +744,28 @@ def analyze_story(story):
             "creativity, and engagement. Offer suggestions for improvement:\n"
             f"{story}"
         )
-        prompt_template = ChatPromptTemplate.from_messages([
-            ("system", "You are a helpful assistant that provides feedback on storytelling."),
-            ("human", "{prompt}"),
-        ])
+        prompt_template = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    "You are a helpful assistant that provides feedback on storytelling.",
+                ),
+                ("human", "{prompt}"),
+            ]
+        )
         chain = prompt_template | llm
         response = chain.invoke({"prompt": prompt})
-        return response['content']
+        return response["content"]
     except Exception as e:
         return f"Error in analyzing story: {str(e)}"
 
-@api_view(['POST'])
+
+@api_view(["POST"])
 def story_feedback(request):
-    story = request.data.get('story', '')
+    story = request.data.get("story", "")
     feedback = analyze_story(story)
-    return Response({'feedback': feedback})
+    return Response({"feedback": feedback})
+
 
 def chat_with_bot(user_input):
     try:
@@ -777,7 +791,9 @@ def chat_with_bot(user_input):
 
         # If it's a request for a scenario
         if "provide a scenario" in user_input.lower():
-            prompt = "Generate a brief, engaging storytelling scenario in 2-3 sentences."
+            prompt = (
+                "Generate a brief, engaging storytelling scenario in 2-3 sentences."
+            )
         else:
             prompt = """Analyze the following story and provide feedback in this format:
 
@@ -802,34 +818,37 @@ def chat_with_bot(user_input):
             Keep each section concise with 1-2 lines per point."""
 
         user_message = f"User's message: {user_input}"
-        
-        prompt_template = ChatPromptTemplate.from_messages([
-            ("system", system_prompt),
-            ("human", user_message),
-        ])
+
+        prompt_template = ChatPromptTemplate.from_messages(
+            [
+                ("system", system_prompt),
+                ("human", user_message),
+            ]
+        )
 
         chain = prompt_template | llm
         response = chain.invoke({"prompt": user_message})
-        
+
         # Clean up the response
-        content = response.content if hasattr(response, 'content') else str(response)
-        content = content.replace('*', '•').replace('\n\n\n', '\n\n')
-        
+        content = response.content if hasattr(response, "content") else str(response)
+        content = content.replace("*", "•").replace("\n\n\n", "\n\n")
+
         # Additional formatting cleanup
-        content = content.replace('Scenario Alignment:', '\nScenario Alignment:')
-        content = content.replace('Key Strengths:', '\nKey Strengths:')
-        content = content.replace('Areas for Growth:', '\nAreas for Growth:')
-        content = content.replace('Technical Elements:', '\nTechnical Elements:')
-        content = content.replace('Overall Impact:', '\nOverall Impact:')
-        
+        content = content.replace("Scenario Alignment:", "\nScenario Alignment:")
+        content = content.replace("Key Strengths:", "\nKey Strengths:")
+        content = content.replace("Areas for Growth:", "\nAreas for Growth:")
+        content = content.replace("Technical Elements:", "\nTechnical Elements:")
+        content = content.replace("Overall Impact:", "\nOverall Impact:")
+
         return content
 
     except Exception as e:
         logger.error(f"Error in chat interaction: {str(e)}")
         return "I apologize, but I'm having trouble processing that right now. Please try again."
 
-@api_view(['POST'])
+
+@api_view(["POST"])
 def chat_with_assistant(request):
-    user_input = request.data.get('message', '')
+    user_input = request.data.get("message", "")
     response = chat_with_bot(user_input)
-    return Response({'response': response})
+    return Response({"response": response})

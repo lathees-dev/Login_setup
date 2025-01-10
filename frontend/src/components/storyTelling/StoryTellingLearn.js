@@ -1,298 +1,96 @@
-import React, { useState } from 'react';
+/* eslint-disable no-unused-vars */
+import React from "react";
 import {
-  Container,
   Box,
   Typography,
+  Container,
   Paper,
-  IconButton,
   Grid,
+  IconButton,
   Card,
   CardContent,
-  CardMedia,
-  Divider,
-  Tabs,
-  Tab,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Button,
-} from '@mui/material';
-import { styled } from '@mui/material/styles';
-import { useNavigate } from 'react-router-dom';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
-import BookmarkIcon from '@mui/icons-material/Bookmark';
-
-const Section = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  marginBottom: theme.spacing(3),
-  backgroundColor: '#fff',
-}));
-
-const Tip = styled(Box)(({ theme }) => ({
-  backgroundColor: theme.palette.primary.light,
-  color: theme.palette.primary.contrastText,
-  padding: theme.spacing(2),
-  borderRadius: theme.spacing(1),
-  marginBottom: theme.spacing(2),
-}));
-
-const VideoCard = styled(Card)(({ theme }) => ({
-  position: 'relative',
-  cursor: 'pointer',
-  '&:hover': {
-    transform: 'scale(1.02)',
-    transition: 'transform 0.3s ease-in-out',
-  },
-}));
-
-const ImageContainer = styled(Box)(({ theme }) => ({
-  position: 'relative',
-  marginBottom: theme.spacing(3),
-  '& img': {
-    width: '100%',
-    borderRadius: theme.spacing(1),
-  },
-  '& .caption': {
-    marginTop: theme.spacing(1),
-    color: theme.palette.text.secondary,
-    fontStyle: 'italic',
-  },
-}));
+} from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import AssignmentIcon from "@mui/icons-material/Assignment";
+import EmojiObjectsIcon from "@mui/icons-material/EmojiObjects";
+/* eslint-enable no-unused-vars */
 
 const StoryTellingLearn = () => {
   const navigate = useNavigate();
-  const [currentTab, setCurrentTab] = useState(0);
-
-  const handleTabChange = (event, newValue) => {
-    setCurrentTab(newValue);
-  };
-
-  // Content data
-  const chapters = [
-    {
-      title: "Introduction to Storytelling",
-      content: [
-        {
-          title: "What is Storytelling?",
-          content: introductoryContent,
-          description: "Understanding the fundamentals of storytelling and its importance"
-        },
-        {
-          title: "The Power of Stories",
-          content: "Stories are a bridge between the logical and emotional parts of the human brain...",
-          description: "Explore how stories impact our minds and emotions"
-        }
-      ]
-    },
-    {
-      title: "Foundations",
-      content: [
-        {
-          title: "Core Elements",
-          elements: coreElements,
-          description: "Master these fundamental building blocks of storytelling."
-        },
-        {
-          title: "Story Structure",
-          image: "/images/story-structure.png",
-          description: "Understanding the classic three-act structure and its variations."
-        }
-      ]
-    },
-    {
-      title: "Advanced Techniques",
-      content: [
-        {
-          title: "The Hero's Journey",
-          stages: heroJourneyStages,
-          image: "/images/monomyth1.png"
-        },
-        {
-          title: "Character Development",
-          techniques: characterDevelopmentTips
-        }
-      ]
-    },
-    {
-      title: "Professional Tips",
-      content: professionalTips
-    },
-    {
-      title: "Professional Applications",
-      content: [
-        {
-          title: "Career Success Through Storytelling",
-          content: careerApplications,
-          description: "Learn how to use storytelling in your professional life"
-        },
-        {
-          title: "Practical Exercises",
-          content: practicalExercises,
-          description: "Hands-on activities to improve your storytelling skills"
-        }
-      ]
-    }
-  ];
-
-  const videos = [
-    {
-      id: "P2CVIGuRg4E",
-      title: "The Art of Storytelling",
-      description: "Learn the fundamentals of engaging storytelling",
-      thumbnail: "/images/video-thumb1.jpg"
-    },
-    {
-      id: "Nj-hdQMa3uA",
-      title: "Voice and Expression",
-      description: "Master the art of vocal delivery",
-      thumbnail: "/images/video-thumb2.jpg"
-    }
-  ];
 
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ py: 4 }}>
-        {/* Header Section */}
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 2 }}>
-          <IconButton onClick={() => navigate('/story-telling')} color="primary">
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h4">
-            The Professional Storyteller&apos;s Handbook
-          </Typography>
-        </Box>
-
-        {/* Navigation Tabs */}
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-          <Tabs value={currentTab} onChange={handleTabChange}>
-            <Tab label="Learn" />
-            <Tab label="Practice" />
-            <Tab label="Resources" />
-          </Tabs>
-        </Box>
-
-        {/* Content based on current tab */}
-        {currentTab === 0 && (
-          <>
-            {chapters.map((chapter, index) => (
-              <Section key={index}>
-                <Typography variant="h5" gutterBottom>
-                  Chapter {index + 1}: {chapter.title}
-                </Typography>
-                
-                {chapter.content.map((section, sectionIndex) => (
-                  <Accordion key={sectionIndex} defaultExpanded={sectionIndex === 0}>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography variant="h6">{section.title}</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Box sx={{ mb: 3 }}>
-                        <Typography paragraph>{section.description}</Typography>
-                        
-                        {section.image && (
-                          <ImageContainer>
-                            <img src={section.image} alt={section.title} />
-                            <Typography className="caption">
-                              {section.title} Diagram
-                            </Typography>
-                          </ImageContainer>
-                        )}
-                        
-                        {section.elements && (
-                          <Grid container spacing={3}>
-                            {section.elements.map((element) => (
-                              <Grid item xs={12} md={4} key={element.title}>
-                                <Card elevation={2}>
-                                  <CardContent>
-                                    <Typography variant="h6" gutterBottom color="primary">
-                                      {element.title}
-                                    </Typography>
-                                    <Typography variant="body2">
-                                      {element.desc}
-                                    </Typography>
-                                  </CardContent>
-                                </Card>
-                              </Grid>
-                            ))}
-                          </Grid>
-                        )}
-                      </Box>
-                    </AccordionDetails>
-                  </Accordion>
-                ))}
-              </Section>
-            ))}
-
-            {/* Video Resources Section */}
-            <Section>
-              <Typography variant="h5" gutterBottom>
-                Video Resources
-              </Typography>
-              <Grid container spacing={3}>
-                {videos.map((video) => (
-                  <Grid item xs={12} md={6} key={video.id}>
-                    <VideoCard>
-                      <CardMedia
-                        component="iframe"
-                        height="315"
-                        src={`https://www.youtube.com/embed/${video.id}`}
-                        title={video.title}
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      />
-                      <CardContent>
-                        <Typography variant="h6" gutterBottom>
-                          {video.title}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {video.description}
-                        </Typography>
-                      </CardContent>
-                    </VideoCard>
-                  </Grid>
-                ))}
-              </Grid>
-            </Section>
-
-            {/* Interactive Examples Section */}
-            <Section>
-              <Typography variant="h5" gutterBottom>
-                Interactive Examples
-              </Typography>
-              {/* Add interactive examples here */}
-            </Section>
-          </>
-        )}
-
-        {currentTab === 1 && (
-          <Section>
-            <Typography variant="h5" gutterBottom>
-              Practice Exercises
-            </Typography>
-            {/* Add practice exercises here */}
-          </Section>
-        )}
-
-        {currentTab === 2 && (
-          <Section>
-            <Typography variant="h5" gutterBottom>
-              Additional Resources
-            </Typography>
-            {/* Add resources here */}
-          </Section>
-        )}
+    <Container maxWidth="md">
+      <Box display="flex" alignItems="center" mb={3}>
+        <IconButton onClick={() => navigate(-1)} sx={{ color: "#333" }}>
+          <ArrowBackIcon />
+        </IconButton>
+        <Typography variant="h4" sx={{ ml: 2 }}>
+          Storytelling Learning
+        </Typography>
       </Box>
+      <Grid container spacing={3}>
+        <Grid item xs={12} sm={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h5" component="div">
+                Story Structure
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Learn about the essential elements of a good story, including
+                the beginning, middle, and end.
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h5" component="div">
+                Character Development
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Understand how to create compelling characters that drive your
+                story forward.
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h5" component="div">
+                Plot and Conflict
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Explore how to build a plot that keeps your audience engaged
+                with meaningful conflict.
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h5" component="div">
+                Descriptive Elements
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Enhance your storytelling with vivid descriptions and sensory
+                details.
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
     </Container>
   );
 };
 
 // Data
 const coreElements = [
-  { 
-    title: 'Character',
+  {
+    title: "Character",
     desc: "The protagonist who embodies the story's theme",
     details: `Characters are the heart of any story. A well-developed character needs:
     • Clear motivations that drive their actions
@@ -302,11 +100,11 @@ const coreElements = [
     • Relationships that influence their decisions
     • Growth potential throughout the story
     
-    Strong characters make readers invest emotionally in your story. They should feel real, with both strengths and flaws, hopes and fears.`
+    Strong characters make readers invest emotionally in your story. They should feel real, with both strengths and flaws, hopes and fears.`,
   },
-  { 
-    title: 'Setting',
-    desc: 'Time and place where the story unfolds',
+  {
+    title: "Setting",
+    desc: "Time and place where the story unfolds",
     details: `The setting is more than just a backdrop. It should:
     • Create atmosphere and mood
     • Influence character behavior and choices
@@ -314,22 +112,22 @@ const coreElements = [
     • Add authenticity to the narrative
     • Create constraints or opportunities for the plot
     
-    A well-crafted setting can become almost like another character in your story, shaping events and influencing outcomes.`
+    A well-crafted setting can become almost like another character in your story, shaping events and influencing outcomes.`,
   },
-  { 
-    title: 'Conflict',
-    desc: 'The challenge or problem faced by the protagonist',
+  {
+    title: "Conflict",
+    desc: "The challenge or problem faced by the protagonist",
     details: `Conflict drives the story forward. Types of conflict include:
     • Internal: Character vs. Self (moral dilemmas, personal growth)
     • External: Character vs. Others (interpersonal struggles)
     • Environmental: Character vs. Nature/Society
     • Multiple Layers: Combining different types of conflict
     
-    Without conflict, there's no story. It creates tension, drives character development, and keeps readers engaged.`
+    Without conflict, there's no story. It creates tension, drives character development, and keeps readers engaged.`,
   },
-  { 
-    title: 'Resolution',
-    desc: 'The outcome or transformation resulting from the conflict',
+  {
+    title: "Resolution",
+    desc: "The outcome or transformation resulting from the conflict",
     details: `A satisfying resolution should:
     • Address the main conflict meaningfully
     • Show character growth or change
@@ -337,19 +135,19 @@ const coreElements = [
     • Feel earned, not forced
     • Leave an impact on the reader
     
-    The resolution doesn't always mean a happy ending, but it should provide closure and satisfaction.`
+    The resolution doesn't always mean a happy ending, but it should provide closure and satisfaction.`,
   },
-  { 
-    title: 'Theme',
-    desc: 'The underlying message or moral of the story',
+  {
+    title: "Theme",
+    desc: "The underlying message or moral of the story",
     details: `Theme is the deeper meaning behind your story:
     • Universal truths about human nature
     • Social commentary or criticism
     • Moral lessons or ethical questions
     • Philosophical ideas or concepts
     
-    A strong theme makes your story memorable and gives it lasting impact beyond mere entertainment.`
-  }
+    A strong theme makes your story memorable and gives it lasting impact beyond mere entertainment.`,
+  },
 ];
 
 const storyStructures = {
@@ -380,15 +178,16 @@ const storyStructures = {
       "Each act should flow naturally into the next",
       "Maintain rising tension throughout",
       "Include smaller conflicts within each act",
-      "End each act with a significant event or revelation"
-    ]
-  }
+      "End each act with a significant event or revelation",
+    ],
+  },
 };
 
 const characterDevelopmentTips = [
   {
     title: "Character Depth",
-    description: "Create multi-dimensional characters with clear motivations, flaws, and growth potential.",
+    description:
+      "Create multi-dimensional characters with clear motivations, flaws, and growth potential.",
     details: `Building Complex Characters:
 
     1. Background & History
@@ -419,7 +218,7 @@ const characterDevelopmentTips = [
     • Areas for development
     • Learning opportunities
     • Character arcs
-    • Transformation points`
+    • Transformation points`,
   },
   {
     title: "Character Arc",
@@ -449,14 +248,15 @@ const characterDevelopmentTips = [
     • Catalysts for change
     • Meaningful challenges
     • Consistent progression
-    • Satisfying conclusion`
-  }
+    • Satisfying conclusion`,
+  },
 ];
 
 const professionalTips = [
   {
     title: "Voice and Expression",
-    content: "Master the art of vocal delivery with proper pacing, tone, and emphasis.",
+    content:
+      "Master the art of vocal delivery with proper pacing, tone, and emphasis.",
     details: `Mastering Vocal Delivery:
 
     1. Pitch and Tone
@@ -475,11 +275,12 @@ const professionalTips = [
     • Highlight key words
     • Build to climactic moments
     • Create contrast
-    • Use silence for impact`
+    • Use silence for impact`,
   },
   {
     title: "Body Language",
-    content: "Use gestures and facial expressions to enhance your storytelling.",
+    content:
+      "Use gestures and facial expressions to enhance your storytelling.",
     details: `Effective Physical Storytelling:
 
     1. Facial Expressions
@@ -498,8 +299,8 @@ const professionalTips = [
     • Open stance for engagement
     • Movement for energy
     • Posture for authority
-    • Space for dynamics`
-  }
+    • Space for dynamics`,
+  },
 ];
 
 // Add practice exercises
@@ -512,7 +313,7 @@ const practiceExercises = [
       "Describe a defining moment from their past",
       "What is their greatest desire?",
       // Add more prompts
-    ]
+    ],
   },
   // Add more exercises
 ];
@@ -526,23 +327,23 @@ const additionalResources = [
       "Story by Robert McKee",
       "On Writing by Stephen King",
       // Add more books
-    ]
+    ],
   },
   // Add more resource categories
 ];
 
 const heroJourneyStages = [
-  'Ordinary World',
-  'Call to Adventure',
-  'Refusal of the Call',
-  'Meeting the Mentor',
-  'Crossing the Threshold',
-  'Trials, Allies, Enemies',
-  'The Ordeal',
-  'Reward',
-  'The Road Back',
-  'Resurrection',
-  'Return with the Elixir'
+  "Ordinary World",
+  "Call to Adventure",
+  "Refusal of the Call",
+  "Meeting the Mentor",
+  "Crossing the Threshold",
+  "Trials, Allies, Enemies",
+  "The Ordeal",
+  "Reward",
+  "The Road Back",
+  "Resurrection",
+  "Return with the Elixir",
 ];
 
 // Add new content sections
@@ -552,48 +353,54 @@ const introductoryContent = {
   importance: [
     {
       title: "Enhances Communication Skills",
-      details: "Storytelling teaches students how to express themselves clearly and confidently. It improves verbal and non-verbal communication, critical for presentations, interviews, and teamwork."
+      details:
+        "Storytelling teaches students how to express themselves clearly and confidently. It improves verbal and non-verbal communication, critical for presentations, interviews, and teamwork.",
     },
     {
       title: "Boosts Creativity and Imagination",
-      details: "Encourages students to think creatively, come up with unique ideas, and explore different perspectives."
+      details:
+        "Encourages students to think creatively, come up with unique ideas, and explore different perspectives.",
     },
     {
       title: "Builds Empathy and Emotional Intelligence",
-      details: "By stepping into the shoes of a story's characters, students develop a deeper understanding of emotions, relationships, and diverse cultures."
+      details:
+        "By stepping into the shoes of a story's characters, students develop a deeper understanding of emotions, relationships, and diverse cultures.",
     },
     {
       title: "Strengthens Analytical and Problem-Solving Skills",
-      details: "Stories often involve conflicts and resolutions, which can help students learn how to analyze problems and find solutions."
+      details:
+        "Stories often involve conflicts and resolutions, which can help students learn how to analyze problems and find solutions.",
     },
     {
       title: "Makes Learning Memorable",
-      details: "Concepts and lessons embedded in stories are easier to remember and internalize than abstract theories."
+      details:
+        "Concepts and lessons embedded in stories are easier to remember and internalize than abstract theories.",
     },
     {
       title: "Prepares for Professional Success",
-      details: "In careers, storytelling is critical for effective presentations, marketing, networking, and leadership. Professionals often use storytelling to pitch ideas, convey visions, or connect with clients."
-    }
-  ]
+      details:
+        "In careers, storytelling is critical for effective presentations, marketing, networking, and leadership. Professionals often use storytelling to pitch ideas, convey visions, or connect with clients.",
+    },
+  ],
 };
 
 const storytellingRules = [
   {
     title: "Know Your Audience",
     details: `• Tailor your story to the interests, age, and background of your audience
-    • Use language, examples, and themes that resonate with them`
+    • Use language, examples, and themes that resonate with them`,
   },
   {
     title: "Start with a Strong Hook",
     details: `• Capture attention from the very beginning with a question, an interesting fact, or an intriguing event
     • Example: "What if you woke up one day and the sky wasn't blue anymore, but green?"`,
-    example: true
+    example: true,
   },
   {
     title: "Create a Clear Structure",
     details: `• Beginning: Set the scene and introduce the characters and situation
     • Middle: Introduce a conflict or challenge, building suspense
-    • End: Resolve the conflict and provide closure`
+    • End: Resolve the conflict and provide closure`,
   },
   // ... Add more rules from the content
 ];
@@ -603,30 +410,38 @@ const careerApplications = {
   sections: [
     {
       title: "Job Interviews",
-      content: "Use storytelling to narrate experiences, achievements, or problem-solving examples. For instance: 'Let me tell you about the time I led a team during a college hackathon...'"
+      content:
+        "Use storytelling to narrate experiences, achievements, or problem-solving examples. For instance: 'Let me tell you about the time I led a team during a college hackathon...'",
     },
     {
       title: "Presentations and Public Speaking",
-      content: "Storytelling adds a human touch to technical or business presentations, making them engaging."
+      content:
+        "Storytelling adds a human touch to technical or business presentations, making them engaging.",
     },
     // ... Add more career applications
-  ]
+  ],
 };
 
 const practicalExercises = [
   {
     title: "Creative Writing",
     description: "Write short stories on a given theme",
-    instructions: "Choose a theme from the list below and write a story incorporating the storytelling elements we've discussed.",
-    themes: ["Overcoming Fear", "First Day", "Unexpected Discovery"]
+    instructions:
+      "Choose a theme from the list below and write a story incorporating the storytelling elements we've discussed.",
+    themes: ["Overcoming Fear", "First Day", "Unexpected Discovery"],
   },
   {
     title: "Role-Playing",
     description: "Act out stories to improve communication and empathy",
-    instructions: "Work with a partner to act out one of the following scenarios...",
-    scenarios: ["Job Interview", "Client Presentation", "Team Conflict Resolution"]
+    instructions:
+      "Work with a partner to act out one of the following scenarios...",
+    scenarios: [
+      "Job Interview",
+      "Client Presentation",
+      "Team Conflict Resolution",
+    ],
   },
   // ... Add more exercises
 ];
 
-export default StoryTellingLearn; 
+export default StoryTellingLearn;
