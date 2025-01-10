@@ -1,20 +1,24 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import Login from "./components/Login";
-import Signup from "./components/Signup";
-import AdminSignup from "./components/AdminSignup";
-import AdminHome from "./components/AdminHome";
-import UserHome from "./components/UserHome";
-import ForgotPassword from "./components/ForgotPassword";
-import ResetPassword from "./components/ResetPassword";
-import Profile from "./components/Profile";
-import { AppBar, Toolbar, Button, Container, Box } from "@mui/material";
-import ErrorBoundary from "./components/ErrorBoundary";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import Login from './components/Login';
+import Signup from './components/Signup';
+import AdminSignup from './components/AdminSignup';
+import AdminHome from './components/AdminHome';
+import UserHome from './components/UserHome';
+import ForgotPassword from './components/ForgotPassword';
+import ResetPassword from './components/ResetPassword';
+import Profile from './components/Profile';
+import StoryTelling from './components/StoryTelling';
+import StoryTellingOptions from './components/storyTelling/StoryTellingOptions';
+import StoryTellingTest from './components/storyTelling/StoryTellingTest';
+import StoryTellingLearn from './components/storyTelling/StoryTellingLearn';
+import { AppBar, Toolbar, Button, Container, Box } from '@mui/material';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   // Get current path
   const path = window.location.pathname;
-  const showNavBar = !["/user-home", "/admin-home", "/profile"].includes(path);
+  const showNavBar = !['/user-home', '/admin-home', '/profile', '/story-telling'].includes(path);
 
   return (
     <ErrorBoundary>
@@ -44,6 +48,10 @@ function App() {
               <Route path="/" element={<Login />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/story-telling" element={<StoryTellingOptions />} />
+              <Route path="/story-telling/practice" element={<StoryTelling />} />
+              <Route path="/story-telling/learn" element={<StoryTellingLearn />} />
+              <Route path="/story-telling/test" element={<StoryTellingTest />} />
             </Routes>
           </Container>
         </Box>

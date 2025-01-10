@@ -233,8 +233,9 @@ const roadmapData = [
   {
     id: 6,
     title: "Storytelling Techniques",
-    locked: true,
+    locked: false,
     position: "right",
+    link: '/story-telling'
   },
   {
     id: 7,
@@ -421,7 +422,12 @@ const UserHome = () => {
         completed={item.completed}
         locked={item.locked}
         isTest={item.isTest}
-        onClick={() => !item.locked && item.link && navigate(item.link)}
+        onClick={() => {
+          if (!item.locked && item.link) {
+            navigate(item.link);
+          }
+        }}
+        sx={{ cursor: item.locked ? 'not-allowed' : 'pointer' }}
       >
         <NodeCircle completed={item.completed} isTest={item.isTest}>
           {!item.isTest && (
@@ -484,7 +490,7 @@ const UserHome = () => {
             {isSidebarOpen && (
               <Typography variant="subtitle1" noWrap>
                 {firstName}
-              </Typography>
+            </Typography>
             )}
           </Box>
           <IconButton
@@ -511,7 +517,7 @@ const UserHome = () => {
                   }}
                 >
                   {item.text}
-                </Typography>
+            </Typography>
               )}
             </SidebarItem>
           ))}
