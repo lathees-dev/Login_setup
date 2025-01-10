@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { IconButton, CircularProgress, Box, Typography } from '@mui/material';
+import { IconButton, Box, Typography } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import StopIcon from '@mui/icons-material/Stop';
 
-const VoiceInput = ({ onTranscript, disabled }) => {
+const VoiceInput = ({ onTranscript, disabled, onStart, onEnd }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [recognition, setRecognition] = useState(null);
 
@@ -33,6 +33,7 @@ const VoiceInput = ({ onTranscript, disabled }) => {
       recognition.start();
       setRecognition(recognition);
       setIsRecording(true);
+      onStart?.();
     } catch (error) {
       console.error('Speech recognition not supported:', error);
       alert('Speech recognition is not supported in your browser. Please use Chrome or Edge.');
@@ -45,6 +46,7 @@ const VoiceInput = ({ onTranscript, disabled }) => {
       setRecognition(null);
     }
     setIsRecording(false);
+    onEnd?.();
   };
 
   return (
@@ -57,12 +59,9 @@ const VoiceInput = ({ onTranscript, disabled }) => {
         {isRecording ? <StopIcon /> : <MicIcon />}
       </IconButton>
       {isRecording && (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <CircularProgress size={20} color="error" />
-          <Typography variant="caption" color="error">
-            Recording...
-          </Typography>
-        </Box>
+        <Typography variant="caption" color="error">
+          Recording...
+        </Typography>
       )}
     </Box>
   );

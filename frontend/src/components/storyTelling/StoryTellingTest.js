@@ -3,115 +3,132 @@ import {
   Container,
   Box,
   Typography,
-  Button,
   Paper,
+  TextField,
+  Button,
   CircularProgress,
   IconButton,
+  Divider,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import MicIcon from '@mui/icons-material/Mic';
-import StopIcon from '@mui/icons-material/Stop';
+import SendIcon from '@mui/icons-material/Send';
+import { useNavigate } from 'react-router-dom';
 import axios from '../../config/axios';
+import VoiceInput from '../VoiceInput';
 
 const Section = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
   marginBottom: theme.spacing(3),
   backgroundColor: '#fff',
+  '& .MuiTypography-body1': {
+    lineHeight: 1.6,
+    '& ul': {
+      paddingLeft: theme.spacing(2),
+      marginTop: 0,
+      marginBottom: 0,
+    }
+  }
 }));
 
 const StoryTellingTest = () => {
   const navigate = useNavigate();
-  const [situation, setSituation] = useState(null);
-  const [isRecording, setIsRecording] = useState(false);
+  const [situation, setSituation] = useState('');
+  const [userStory, setUserStory] = useState('');
+  const [feedback, setFeedback] = useState('');
   const [loading, setLoading] = useState(false);
   const [score, setScore] = useState(null);
-  const [transcription, setTranscription] = useState('');
-  const mediaRecorderRef = useRef(null);
-  const chunksRef = useRef([]);
-  const [error, setError] = useState('');
+  const [timeLeft, setTimeLeft] = useState(120); // 2 minutes in seconds
+  const [isRecording, setIsRecording] = useState(false);
+  const timerRef = useRef(null);
 
+  // Get initial test situation when component mounts
   useEffect(() => {
+    const getSituation = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get('/storytelling/api/get-test-situation/');
+        setSituation(response.data.description);
+      } catch (error) {
+        console.error('Error:', error);
+        setSituation('Failed to load test situation. Please try refreshing the page.');
+      } finally {
+        setLoading(false);
+      }
+    };
     getSituation();
   }, []);
 
-  const getSituation = async () => {
+  const startTimer = () => {
+    setTimeLeft(120);
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prevTime) => {
+        if (prevTime <= 1) {
+          stopTimer();
+          return 0;
+        }
+        return prevTime - 1;
+      });
+    }, 1000);
+  };
+
+  const stopTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleVoiceStart = () => {
+    setIsRecording(true);
+    startTimer();
+  };
+
+  const handleVoiceEnd = () => {
+    setIsRecording(false);
+    stopTimer();
+  };
+
+  const handleSubmitStory = async () => {
+    if (!userStory.trim()) return;
+    
+    setLoading(true);
+    try {
+      const response = await axios.post('/storytelling/api/chat-with-assistant/', {
+        message: `Test Situation: "${situation}"\n\nUser's Story: ${userStory}\n\nPlease analyze this test response and provide detailed feedback with a score out of 10.`
+      });
+      
+      // Extract score from feedback if present
+      const feedbackText = response.data.response;
+      const scoreMatch = feedbackText.match(/(\d{1,2})\/10/);
+      if (scoreMatch) {
+        setScore(parseInt(scoreMatch[1]));
+      }
+      
+      setFeedback(feedbackText);
+    } catch (error) {
+      setFeedback('I apologize, but I had trouble analyzing your story. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNewSituation = async () => {
+    setLoading(true);
     try {
       const response = await axios.get('/storytelling/api/get-test-situation/');
-      setSituation(response.data);
+      setSituation(response.data.description);
+      setUserStory('');
+      setFeedback('');
+      setScore(null);
     } catch (error) {
-      console.error('Error getting situation:', error);
-    }
-  };
-
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
-      });
-      chunksRef.current = [];
-
-      mediaRecorderRef.current.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunksRef.current.push(e.data);
-        }
-      };
-
-      mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm;codecs=opus' });
-        await submitTest(audioBlob);
-      };
-
-      mediaRecorderRef.current.start(1000);
-      setIsRecording(true);
-      setError('');
-    } catch (error) {
-      console.error('Error starting recording:', error);
-      setError('Error accessing microphone. Please ensure microphone permissions are granted.');
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
-
-  const submitTest = async (audioBlob) => {
-    setLoading(true);
-    setError('');
-    try {
-      // Convert webm to wav format
-      const reader = new FileReader();
-      reader.readAsDataURL(audioBlob);
-      reader.onloadend = async () => {
-        const base64Audio = reader.result;
-        
-        try {
-          const response = await axios.post('/storytelling/api/submit-test/', {
-            situationId: situation.id,
-            audioData: base64Audio,
-          });
-          
-          setScore(response.data.score);
-          setTranscription(response.data.transcription);
-        } catch (error) {
-          console.error('Error submitting test:', error);
-          if (error.response?.status === 401) {
-            setError('Please log in to save your test results');
-          } else if (error.response?.data?.error) {
-            setError(error.response.data.error);
-          } else {
-            setError('Error submitting test. Please try again.');
-          }
-        }
-      };
-    } catch (error) {
-      console.error('Error processing audio:', error);
-      setError('Error processing audio. Please try again.');
+      setSituation('Failed to load new test situation. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -125,71 +142,124 @@ const StoryTellingTest = () => {
             <ArrowBackIcon />
           </IconButton>
           <Typography variant="h4">
-            Storytelling Test
+            Story Telling Test
           </Typography>
         </Box>
 
-        {situation && (
-          <Section elevation={3}>
+        {/* Test Situation Section */}
+        <Section elevation={3}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h6" gutterBottom>
-              Your Situation
+              Test Situation
             </Typography>
-            <Typography variant="body1" sx={{ mb: 3 }}>
-              {situation.description}
-            </Typography>
+            <Button 
+              variant="outlined" 
+              onClick={handleNewSituation}
+              disabled={loading}
+            >
+              Get New Situation
+            </Button>
+          </Box>
+          <Typography variant="body1" sx={{ minHeight: '80px' }}>
+            {loading ? <CircularProgress size={24} /> : situation}
+          </Typography>
+        </Section>
+
+        {/* Story Input Section */}
+        <Section elevation={3}>
+          <Typography variant="h6" gutterBottom>
+            Your Response
+          </Typography>
+          
+          <TextField
+            fullWidth
+            multiline
+            rows={6}
+            variant="outlined"
+            value={userStory}
+            InputProps={{
+              readOnly: true,
+            }}
+            placeholder="Your spoken response will appear here..."
+            disabled={loading}
+          />
+          
+          <Box sx={{ 
+            mt: 2, 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            {isRecording && (
+              <Typography variant="h6" color="error">
+                Time Remaining: {formatTime(timeLeft)}
+              </Typography>
+            )}
             
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 3 }}>
+            <Box sx={{ 
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2 
+            }}>
+              <VoiceInput 
+                onTranscript={setUserStory}
+                disabled={loading}
+                onStart={handleVoiceStart}
+                onEnd={handleVoiceEnd}
+              />
               <Button
                 variant="contained"
-                color={isRecording ? "error" : "primary"}
-                startIcon={isRecording ? <StopIcon /> : <MicIcon />}
-                onClick={isRecording ? stopRecording : startRecording}
-                disabled={loading}
+                endIcon={loading ? <CircularProgress size={20} /> : <SendIcon />}
+                onClick={handleSubmitStory}
+                disabled={loading || !userStory.trim() || isRecording}
               >
-                {isRecording ? "Stop Recording" : "Start Recording"}
+                Submit Response
               </Button>
             </Box>
+          </Box>
+        </Section>
 
-            {loading && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-                <CircularProgress />
-              </Box>
-            )}
-
-            {transcription && (
-              <Section>
-                <Typography variant="h6" gutterBottom>
-                  Your Response
-                </Typography>
-                <Typography variant="body1">
-                  {transcription}
-                </Typography>
-              </Section>
-            )}
-
+        {/* Feedback and Score Section */}
+        {(feedback || score !== null) && (
+          <Section elevation={3}>
             {score !== null && (
-              <Section>
+              <>
                 <Typography variant="h6" gutterBottom>
                   Your Score
                 </Typography>
-                <Typography variant="h3" color="primary" align="center">
-                  {score}/100
-                </Typography>
-              </Section>
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  alignItems: 'center',
+                  my: 3 
+                }}>
+                  <Typography variant="h2" color="primary">
+                    {score}/10
+                  </Typography>
+                </Box>
+                <Divider sx={{ my: 3 }} />
+              </>
             )}
+            
+            <Typography variant="h6" gutterBottom>
+              Feedback & Analysis
+            </Typography>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                whiteSpace: 'pre-line',
+                '& ul': { 
+                  listStyle: 'none',
+                  padding: 0,
+                  '& li': {
+                    marginBottom: 1
+                  }
+                }
+              }}
+            >
+              {feedback}
+            </Typography>
           </Section>
-        )}
-
-        {error && (
-          <Box sx={{ 
-            mt: 2, 
-            p: 2, 
-            bgcolor: 'error.light', 
-            color: 'error.contrastText',
-            borderRadius: 1
-          }}>
-            <Typography>{error}</Typography>
-          </Box>
         )}
       </Box>
     </Container>

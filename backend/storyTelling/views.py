@@ -13,6 +13,8 @@ import io
 import random
 from .models import StoryTest
 from rest_framework.permissions import AllowAny
+from django.core.cache import cache
+import json
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -44,12 +46,15 @@ SITUATIONS = [
     }
 ]
 
-def chat_with_bot(user_input):
+def chat_with_bot(user_input, conversation_history=None):
     try:
         system_prompt = """You are a friendly storytelling assistant. Your role is to:
         1. For scenarios: Provide a brief, clear scenario in 2-3 sentences maximum. No asterisks or special formatting.
         2. For feedback: Analyze the story based on key storytelling elements and provide concise feedback.
         3. When analyzing stories, first verify if the story matches the given scenario.
+        4. If the user asks a question about storytelling, provide a clear and concise answer.
+        5. If the user asks something unrelated to storytelling, gently guide them back to the topic.
+        6. Maintain context from previous messages in the conversation.
 
         When analyzing stories, evaluate these aspects in order:
         1. Scenario Alignment:
@@ -66,9 +71,71 @@ def chat_with_bot(user_input):
         
         Keep responses brief but specific."""
 
-        # If it's a request for a scenario
-        if "provide a scenario" in user_input.lower():
+        # Check if the user is asking a question about storytelling
+        if "what is storytelling" in user_input.lower():
+            return "Storytelling is the art of sharing ideas, emotions, and narratives through spoken, written, or visual means. It's a way to captivate an audience by weaving a sequence of events or a message into a structured and engaging form."
+        elif "what are the things can you able to do" in user_input.lower():
+            return "I can provide you with story scenarios, give feedback on stories you write, and help you improve your storytelling skills. I analyze stories based on plot, character development, and other key elements."
+        elif "hello how are you" in user_input.lower():
+            return "I'm doing well, thank you! How can I help you today?"
+        elif "provide a scenario" in user_input.lower():
             prompt = "Generate a brief, engaging storytelling scenario in 2-3 sentences."
+        elif "i have told the story already" in user_input.lower():
+            if conversation_history and len(conversation_history) > 0:
+                last_user_message = conversation_history[-1]['text']
+                prompt = f"""Analyze the following story and provide feedback in this format:
+
+                Scenario Alignment:
+                • Brief note on how well the story matches the given scenario
+
+                Key Strengths (2-3 points):
+                • Focus on the best elements from: story structure, character development, descriptions, emotional impact
+                
+                Areas for Growth (2-3 points):
+                • Specific suggestions for improvement in: plot development, pacing, descriptions, or character depth
+                
+                Technical Elements:
+                • Comment on: grammar, vocabulary, and sentence structure (1-2 points)
+                
+                Overall Impact:
+                • Brief comment on the story's emotional resonance and originality
+                
+                and also tell the points to improve to tell the professional story teller
+
+                Note: If the story doesn't match the scenario, only provide feedback about scenario alignment and what elements are missing.
+                Keep each section concise with 1-2 lines per point.
+                
+                User's previous story: {last_user_message}"""
+            else:
+                return "Please share your story and the scenario it's based on so I can provide feedback."
+        elif "what are the points to be imporoved" in user_input.lower():
+            if conversation_history and len(conversation_history) > 0:
+                last_user_message = conversation_history[-1]['text']
+                prompt = f"""Analyze the following story and provide feedback in this format:
+
+                Scenario Alignment:
+                • Brief note on how well the story matches the given scenario
+
+                Key Strengths (2-3 points):
+                • Focus on the best elements from: story structure, character development, descriptions, emotional impact
+                
+                Areas for Growth (2-3 points):
+                • Specific suggestions for improvement in: plot development, pacing, descriptions, or character depth
+                
+                Technical Elements:
+                • Comment on: grammar, vocabulary, and sentence structure (1-2 points)
+                
+                Overall Impact:
+                • Brief comment on the story's emotional resonance and originality
+                
+                and also tell the points to improve to tell the professional story teller
+
+                Note: If the story doesn't match the scenario, only provide feedback about scenario alignment and what elements are missing.
+                Keep each section concise with 1-2 lines per point.
+                
+                User's previous story: {last_user_message}"""
+            else:
+                return "Please share your story and the scenario it's based on so I can provide feedback."
         else:
             prompt = """Analyze the following story and provide feedback in this format:
 
@@ -87,8 +154,7 @@ def chat_with_bot(user_input):
             Overall Impact:
             • Brief comment on the story's emotional resonance and originality
             
-            Professional Tips:
-            • 2-3 specific tips to improve storytelling skills
+            and also tell the points to improve to tell the professional story teller
 
             Note: If the story doesn't match the scenario, only provide feedback about scenario alignment and what elements are missing.
             Keep each section concise with 1-2 lines per point."""
@@ -113,13 +179,13 @@ def chat_with_bot(user_input):
         content = content.replace('Areas for Growth:', '\nAreas for Growth:')
         content = content.replace('Technical Elements:', '\nTechnical Elements:')
         content = content.replace('Overall Impact:', '\nOverall Impact:')
-        content = content.replace('Professional Tips:', '\nProfessional Tips:')
         
         return content
 
     except Exception as e:
         logger.error(f"Error in chat interaction: {str(e)}")
         return "I apologize, but I'm having trouble processing that right now. Please try again."
+
 
 @api_view(['POST'])
 def story_feedback(request):
@@ -130,7 +196,18 @@ def story_feedback(request):
 @api_view(['POST'])
 def chat_with_assistant(request):
     user_input = request.data.get('message', '')
-    response = chat_with_bot(user_input)
+    conversation_id = request.data.get('conversationId', 'default')
+    
+    # Retrieve conversation history from cache
+    conversation_history = cache.get(conversation_id, [])
+    
+    response = chat_with_bot(user_input, conversation_history)
+    
+    # Update conversation history
+    conversation_history.append({'text': user_input, 'sender': 'user'})
+    conversation_history.append({'text': response, 'sender': 'bot'})
+    cache.set(conversation_id, conversation_history, timeout=300)  # Keep for 5 minutes
+    
     return Response({'response': response})
 
 def analyze_story(situation, text):

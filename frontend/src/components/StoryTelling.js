@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Container,
   Box,
@@ -8,7 +8,11 @@ import {
   Button,
   CircularProgress,
   IconButton,
-  Divider,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
+  Avatar,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -16,87 +20,104 @@ import SendIcon from '@mui/icons-material/Send';
 import { useNavigate } from 'react-router-dom';
 import axios from '../config/axios';
 import VoiceInput from './VoiceInput';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
+import { v4 as uuidv4 } from 'uuid';
 
-const Section = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  marginBottom: theme.spacing(3),
+const ChatContainer = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(2),
+  marginBottom: theme.spacing(2),
   backgroundColor: '#fff',
-  '& .MuiTypography-body1': {
-    lineHeight: 1.6,
-    '& ul': {
-      paddingLeft: theme.spacing(2),
-      marginTop: 0,
-      marginBottom: 0,
-    }
-  }
+  height: '60vh',
+  overflowY: 'auto',
+  display: 'flex',
+  flexDirection: 'column',
+}));
+
+const InputContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(1),
+  padding: theme.spacing(1),
+  backgroundColor: '#f0f0f0',
+}));
+
+const UserMessage = styled(ListItem)(({ theme }) => ({
+  justifyContent: 'flex-end',
+  textAlign: 'right',
+  paddingRight: theme.spacing(2),
+}));
+
+const BotMessage = styled(ListItem)(({ theme }) => ({
+  justifyContent: 'flex-start',
+  textAlign: 'left',
+  paddingLeft: theme.spacing(2),
 }));
 
 const StoryTelling = () => {
   const navigate = useNavigate();
-  const [scenario, setScenario] = useState('');
-  const [userStory, setUserStory] = useState('');
-  const [feedback, setFeedback] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [userMessage, setUserMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const chatContainerRef = useRef(null);
+  const [conversationId, setConversationId] = useState(localStorage.getItem('conversationId') || uuidv4());
 
-  // Get initial scenario when component mounts
   useEffect(() => {
-    const getScenario = async () => {
-      setLoading(true);
-      try {
-        const response = await axios.post('/storytelling/api/chat-with-assistant/', {
-          message: 'Hi, I want to practice storytelling. Please provide a scenario.'
-        });
-        setScenario(response.data.response);
-      } catch (error) {
-        setScenario('I apologize, but I had trouble generating a scenario. Please try refreshing the page.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    getScenario();
-  }, []);
+    // Initial bot message
+    addBotMessage("Hi, I'm your storytelling guide! I'm here to help you improve your skills. Let's start with a scenario or any questions you have about storytelling.");
+    localStorage.setItem('conversationId', conversationId);
+  }, [conversationId]);
 
-  const handleSubmitStory = async () => {
-    if (!userStory.trim()) return;
-    
-    setLoading(true);
-    try {
-      const response = await axios.post('/storytelling/api/chat-with-assistant/', {
-        message: `Original Scenario: "${scenario}"\n\nUser's Story: ${userStory}\n\nPlease analyze this story in relation to the given scenario.`
-      });
-      setFeedback(response.data.response);
-    } catch (error) {
-      setFeedback('I apologize, but I had trouble analyzing your story. Please try again.');
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    // Scroll to bottom when messages change
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
+  }, [messages]);
+
+  const addBotMessage = (text) => {
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { text, sender: 'bot' },
+    ]);
   };
 
-  const handleNewScenario = async () => {
+  const addUserMessage = (text) => {
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { text, sender: 'user' },
+    ]);
+  };
+
+  const handleSendMessage = async () => {
+    if (!userMessage.trim()) return;
+    
+    addUserMessage(userMessage);
+    setUserMessage('');
     setLoading(true);
+
     try {
       const response = await axios.post('/storytelling/api/chat-with-assistant/', {
-        message: 'Please provide a new scenario for storytelling practice.'
+        message: `User's message: ${userMessage}. Please respond as a friendly storytelling expert, providing guidance, scenarios, analysis, and feedback to improve the user's storytelling skills. If the user asks something unrelated to storytelling, gently guide them back to the topic.`,
+        conversationId: conversationId
       });
-      setScenario(response.data.response);
-      setUserStory('');
-      setFeedback('');
+      addBotMessage(response.data.response);
     } catch (error) {
-      setScenario('I apologize, but I had trouble generating a new scenario. Please try again.');
+      addBotMessage('I apologize, but I had trouble processing your request. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleVoiceInput = (transcript) => {
-    setUserStory(transcript);
+    setUserMessage(transcript);
   };
 
   return (
     <Container maxWidth="md">
       <Box sx={{ py: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 2 }}>
-          <IconButton onClick={() => navigate('/user-home')} color="primary">
+          <IconButton onClick={() => navigate('/story-telling')} color="primary">
             <ArrowBackIcon />
           </IconButton>
           <Typography variant="h4">
@@ -104,85 +125,76 @@ const StoryTelling = () => {
           </Typography>
         </Box>
 
-        {/* Scenario Section */}
-        <Section elevation={3}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Scenario
-            </Typography>
-            <Button 
-              variant="outlined" 
-              onClick={handleNewScenario}
-              disabled={loading}
-            >
-              Get New Scenario
-            </Button>
-          </Box>
-          <Typography variant="body1" sx={{ minHeight: '80px' }}>
-            {loading ? <CircularProgress size={24} /> : scenario}
-          </Typography>
-        </Section>
+        <ChatContainer ref={chatContainerRef}>
+          <List>
+            {messages.map((message, index) => (
+              <ListItem key={index} sx={{ p: 1 }}>
+                <ListItemAvatar>
+                  <Avatar sx={{ bgcolor: message.sender === 'user' ? 'primary.main' : 'secondary.main' }}>
+                    {message.sender === 'user' ? <AccountCircleIcon /> : <SmartToyIcon />}
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        whiteSpace: 'pre-line',
+                        textAlign: message.sender === 'user' ? 'right' : 'left',
+                      }}
+                    >
+                      {message.text}
+                    </Typography>
+                  }
+                />
+              </ListItem>
+            ))}
+            {loading && (
+              <ListItem sx={{ justifyContent: 'flex-start', p: 1 }}>
+                <ListItemAvatar>
+                  <Avatar sx={{ bgcolor: 'secondary.main' }}>
+                    <SmartToyIcon />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={
+                    <Typography variant="body1">
+                      <CircularProgress size={20} />
+                    </Typography>
+                  }
+                />
+              </ListItem>
+            )}
+          </List>
+        </ChatContainer>
 
-        {/* Story Input Section */}
-        <Section elevation={3}>
-          <Typography variant="h6" gutterBottom>
-            Your Story
-          </Typography>
+        <InputContainer>
           <TextField
             fullWidth
-            multiline
-            rows={6}
             variant="outlined"
-            value={userStory}
-            onChange={(e) => setUserStory(e.target.value)}
-            placeholder="Write or speak your story here based on the scenario above..."
+            value={userMessage}
+            onChange={(e) => setUserMessage(e.target.value)}
+            placeholder="Type your message here..."
+            disabled={loading}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleSendMessage();
+              }
+            }}
+          />
+          <VoiceInput 
+            onTranscript={handleVoiceInput}
             disabled={loading}
           />
-          <Box sx={{ 
-            mt: 2, 
-            display: 'flex', 
-            justifyContent: 'flex-end',
-            alignItems: 'center',
-            gap: 2 
-          }}>
-            <VoiceInput 
-              onTranscript={handleVoiceInput}
-              disabled={loading}
-            />
-            <Button
-              variant="contained"
-              endIcon={loading ? <CircularProgress size={20} /> : <SendIcon />}
-              onClick={handleSubmitStory}
-              disabled={loading || !userStory.trim()}
-            >
-              Submit Story
-            </Button>
-          </Box>
-        </Section>
-
-        {/* Feedback Section */}
-        {feedback && (
-          <Section elevation={3}>
-            <Typography variant="h6" gutterBottom>
-              Feedback & Suggestions
-            </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
-                whiteSpace: 'pre-line',
-                '& ul': { 
-                  listStyle: 'none',
-                  padding: 0,
-                  '& li': {
-                    marginBottom: 1
-                  }
-                }
-              }}
-            >
-              {feedback}
-            </Typography>
-          </Section>
-        )}
+          <Button
+            variant="contained"
+            endIcon={loading ? <CircularProgress size={20} /> : <SendIcon />}
+            onClick={handleSendMessage}
+            disabled={loading || !userMessage.trim()}
+          >
+            Send
+          </Button>
+        </InputContainer>
       </Box>
     </Container>
   );
