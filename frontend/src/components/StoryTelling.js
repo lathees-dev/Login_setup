@@ -61,6 +61,7 @@ const StoryTelling = () => {
   const [loading, setLoading] = useState(false);
   const chatContainerRef = useRef(null);
   const [conversationId, setConversationId] = useState(localStorage.getItem('conversationId') || uuidv4());
+  const [conversationHistory, setConversationHistory] = useState([]);
 
   useEffect(() => {
     // Initial bot message
@@ -80,11 +81,19 @@ const StoryTelling = () => {
       ...prevMessages,
       { text, sender: 'bot' },
     ]);
+    setConversationHistory((prevHistory) => [
+      ...prevHistory,
+      { text, sender: 'bot' },
+    ]);
   };
 
   const addUserMessage = (text) => {
     setMessages((prevMessages) => [
       ...prevMessages,
+      { text, sender: 'user' },
+    ]);
+    setConversationHistory((prevHistory) => [
+      ...prevHistory,
       { text, sender: 'user' },
     ]);
   };
@@ -98,8 +107,8 @@ const StoryTelling = () => {
 
     try {
       const response = await axios.post('/storytelling/api/chat-with-assistant/', {
-        message: `User's message: ${userMessage}. Please respond as a friendly storytelling expert, providing guidance, scenarios, analysis, and feedback to improve the user's storytelling skills. If the user asks something unrelated to storytelling, gently guide them back to the topic.`,
-        conversationId: conversationId
+        message: userMessage,
+        conversationHistory: conversationHistory,
       });
       addBotMessage(response.data.response);
     } catch (error) {

@@ -161,6 +161,10 @@ def chat_with_bot(user_input, conversation_history=None):
 
         user_message = f"User's message: {user_input}"
         
+        if conversation_history:
+            conversation_history_str = "\n".join([f"{msg['sender']}: {msg['text']}" for msg in conversation_history])
+            user_message = f"{conversation_history_str}\n{user_message}"
+        
         prompt_template = ChatPromptTemplate.from_messages([
             ("system", system_prompt),
             ("human", user_message),
@@ -196,17 +200,9 @@ def story_feedback(request):
 @api_view(['POST'])
 def chat_with_assistant(request):
     user_input = request.data.get('message', '')
-    conversation_id = request.data.get('conversationId', 'default')
-    
-    # Retrieve conversation history from cache
-    conversation_history = cache.get(conversation_id, [])
+    conversation_history = request.data.get('conversationHistory', [])
     
     response = chat_with_bot(user_input, conversation_history)
-    
-    # Update conversation history
-    conversation_history.append({'text': user_input, 'sender': 'user'})
-    conversation_history.append({'text': response, 'sender': 'bot'})
-    cache.set(conversation_id, conversation_history, timeout=300)  # Keep for 5 minutes
     
     return Response({'response': response})
 
