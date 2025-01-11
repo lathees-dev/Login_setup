@@ -7,7 +7,7 @@ from django.core.mail import send_mail, get_connection
 from django.core.mail.backends.smtp import EmailBackend
 from datetime import datetime, timedelta
 from django.conf import settings
-from .models import CustomUser
+from .models import CustomUser, RoadmapNode
 from pymongo.errors import ConnectionFailure, OperationFailure
 from .mongodb import users_collection, admins_collection, db
 import logging
@@ -891,4 +891,53 @@ def delete_user(request, user_id):
                 return Response({'error': 'User not found'}, status=404)
         return Response({'message': 'User deleted successfully'})
     except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+
+@api_view(['GET'])
+def get_roadmap(request):
+    try:
+        nodes = RoadmapNode.get_roadmap()
+        return Response(nodes)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+
+@api_view(['POST'])
+def save_roadmap(request):
+    try:
+        nodes = request.data
+        # Ensure nodes is a list
+        if not isinstance(nodes, list):
+            return Response({'error': 'Invalid data format. Expected a list of nodes.'}, status=400)
+
+        # Convert string IDs to integers and clean the data
+        cleaned_nodes = []
+        for node in nodes:
+            cleaned_node = {
+                'title': node.get('title', ''),
+                'position': node.get('position', 'left'),
+                'locked': bool(node.get('locked', False)),
+                'isTest': bool(node.get('isTest', False)),
+                'link': node.get('link', ''),
+                'completed': bool(node.get('completed', False)),
+                'stars': int(node.get('stars', 0)),
+                'learnContent': node.get('learnContent', {
+                    'introduction': '',
+                    'content': '',
+                    'examples': '',
+                    'practice': '',
+                    'summary': ''
+                })
+            }
+            if 'id' in node:
+                cleaned_node['id'] = int(node['id'])
+            cleaned_nodes.append(cleaned_node)
+
+        success = RoadmapNode.save_roadmap(cleaned_nodes)
+        if success:
+            return Response({'message': 'Roadmap saved successfully'})
+        return Response({'error': 'Failed to save roadmap'}, status=500)
+    except Exception as e:
+        print(f"Error saving roadmap: {str(e)}")  # For debugging
         return Response({'error': str(e)}, status=500)

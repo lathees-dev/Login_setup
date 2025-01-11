@@ -134,16 +134,8 @@ CACHES = {
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Add these settings for CORS debugging
-CORS_ORIGIN_ALLOW_ALL = DEBUG  # Allow all origins in development
-CORS_ALLOW_CREDENTIALS = True
-CORS_ORIGIN_WHITELIST = [
-    'http://localhost:3000',
-]
 
-# For debugging
-if DEBUG:
-    import logging
-    l = logging.getLogger('django.db.backends')
-    l.setLevel(logging.DEBUG)
-    l.addHandler(logging.StreamHandler())
+
+# MongoDB Configuration
+MONGODB_URI = "mongodb+srv://sutgJxLaXWo7gKMR:sutgJxLaXWo7gKMR@cluster0.2ytii.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+MONGODB_NAME = "login_system"
