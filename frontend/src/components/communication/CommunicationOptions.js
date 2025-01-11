@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   Container,
   Box,
@@ -37,21 +37,22 @@ const CommunicationOptions = () => {
       title: 'Learn',
       description: 'Learn the fundamentals of Communication',
       icon: <SchoolIcon sx={{ fontSize: '4rem' }} />,
-     
+      path: '/learn/1'
     },
     {
       title: 'Practice',
       description: 'Practice your Communication skills',
       icon: <SportsEsportsIcon sx={{ fontSize: '4rem' }} />,
-      
+      path: '/communication/practice'
     },
     {
       title: 'Test',
       description: 'Test your Communication abilities',
       icon: <AssignmentIcon sx={{ fontSize: '4rem' }} />,
-     
+      path: '/communication/test'
     }
   ];
+
   return (
     <Container maxWidth="lg">
       <Box sx={{ py: 4 }}>
@@ -99,6 +100,5 @@ const CommunicationOptions = () => {
     </Container>
   );
 };
-
 
 export default CommunicationOptions; 

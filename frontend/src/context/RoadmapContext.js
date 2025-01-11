@@ -10,9 +10,50 @@ const defaultRoadmapNodes = [
     completed: true,
     stars: 3,
     position: "left",
-    link: "/communication",
+    link: "/learn/1",
     locked: false,
     isTest: false,
+    learnContent: {
+      introduction: '',
+      content: '',
+      examples: '',
+      practice: '',
+      summary: '',
+    }
+  },
+  {
+    id: 2,
+    title: "Grammar / Sentence Framing",
+    completed: true,
+    stars: 2,
+    position: "right",
+    link: "/learn/2",
+    locked: false,
+    isTest: false,
+    learnContent: {
+      introduction: '',
+      content: '',
+      examples: '',
+      practice: '',
+      summary: '',
+    }
+  },
+  {
+    id: 3,
+    title: "Vocabulary Development",
+    completed: false,
+    stars: 0,
+    position: "left",
+    link: "/learn/3",
+    locked: false,
+    isTest: false,
+    learnContent: {
+      introduction: '',
+      content: '',
+      examples: '',
+      practice: '',
+      summary: '',
+    }
   },
   // ... add all other default nodes
 ];

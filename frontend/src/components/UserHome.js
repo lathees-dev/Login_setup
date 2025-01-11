@@ -292,7 +292,11 @@ const renderNode = (item, index, totalNodes, navigate) => (
       completed={item.completed}
       locked={item.locked}
       isTest={item.isTest}
-      onClick={() => !item.locked && item.link && navigate(item.link)}
+      onClick={() => {
+        if (!item.locked) {
+          navigate(item.link);
+        }
+      }}
     >
       <NodeCircle completed={item.completed} isTest={item.isTest}>
         {!item.isTest && (

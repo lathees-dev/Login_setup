@@ -19,6 +19,9 @@ import {
   FormControl,
   InputLabel,
   Rating,
+  TextareaAutosize,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import EditIcon from '@mui/icons-material/Edit';
@@ -42,6 +45,16 @@ const RoadmapCustomization = () => {
     completed: false,
     stars: 0,
   });
+  const [openLearnDialog, setOpenLearnDialog] = useState(false);
+  const [selectedNode, setSelectedNode] = useState(null);
+  const [learnContent, setLearnContent] = useState({
+    introduction: '',
+    content: '',
+    examples: '',
+    practice: '',
+    summary: '',
+  });
+  const [activeTab, setActiveTab] = useState(0);
 
   const handleDragEnd = (result) => {
     if (!result.destination) return;
@@ -119,7 +132,30 @@ const RoadmapCustomization = () => {
   };
 
   const handleLearnTemplate = (nodeId) => {
-    console.log('Opening learn template for node:', nodeId);
+    const node = roadmapNodes.find(n => n.id === nodeId);
+    setSelectedNode(node);
+    setLearnContent(node.learnContent || {
+      introduction: '',
+      content: '',
+      examples: '',
+      practice: '',
+      summary: '',
+    });
+    setOpenLearnDialog(true);
+  };
+
+  const handleLearnContentSave = () => {
+    const updatedNodes = roadmapNodes.map(node => 
+      node.id === selectedNode.id 
+        ? { ...node, learnContent: learnContent }
+        : node
+    );
+    updateRoadmap(updatedNodes);
+    setOpenLearnDialog(false);
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
   };
 
   return (
@@ -135,7 +171,7 @@ const RoadmapCustomization = () => {
         </Button>
       </Box>
 
-      <DragDropContext onDragEnd={handleDragEnd}>
+        <DragDropContext onDragEnd={handleDragEnd}>
         <Paper sx={{ p: 2 }}>
           <Droppable droppableId="droppable-roadmap-nodes">
             {(provided, snapshot) => (
@@ -148,17 +184,17 @@ const RoadmapCustomization = () => {
                 }}
               >
                 {roadmapNodes.map((node, index) => (
-                  <Draggable
+                    <Draggable
                     key={node.id.toString()}
                     draggableId={`draggable-${node.id.toString()}`}
-                    index={index}
-                  >
+                      index={index}
+                    >
                     {(provided, snapshot) => (
                       <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        style={{
-                          ...provided.draggableProps.style,
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          style={{
+                            ...provided.draggableProps.style,
                           marginBottom: '8px'
                         }}
                       >
@@ -213,7 +249,7 @@ const RoadmapCustomization = () => {
                             {node.link && (
                               <Typography variant="body2" color="primary">
                                 Link: {node.link}
-                              </Typography>
+                          </Typography>
                             )}
                           </Box>
 
@@ -226,14 +262,14 @@ const RoadmapCustomization = () => {
                             >
                               <SchoolIcon />
                             </IconButton>
-                            <IconButton 
+                            <IconButton
                               onClick={() => handleOpenDialog(node)}
                               size="small"
                               title="Edit Node"
                             >
                               <EditIcon />
                             </IconButton>
-                            <IconButton 
+                            <IconButton
                               onClick={() => handleDeleteNode(node.id)}
                               size="small"
                               color="error"
@@ -244,15 +280,15 @@ const RoadmapCustomization = () => {
                           </Box>
                         </ListItem>
                       </div>
-                    )}
-                  </Draggable>
+                      )}
+                    </Draggable>
                 ))}
                 {provided.placeholder}
               </List>
             )}
           </Droppable>
         </Paper>
-      </DragDropContext>
+        </DragDropContext>
 
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle>
@@ -327,8 +363,151 @@ const RoadmapCustomization = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Dialog
+        open={openLearnDialog} 
+        onClose={() => setOpenLearnDialog(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          Learn Template: {selectedNode?.title}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+            <Tabs value={activeTab} onChange={handleTabChange}>
+              <Tab label="Introduction" />
+              <Tab label="Content" />
+              <Tab label="Examples" />
+              <Tab label="Practice" />
+              <Tab label="Summary" />
+            </Tabs>
+          </Box>
+
+          {activeTab === 0 && (
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                Introduction
+              </Typography>
+              <TextareaAutosize
+                minRows={4}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  borderRadius: '4px',
+                  border: '1px solid #ddd',
+                }}
+                value={learnContent.introduction}
+                onChange={(e) => setLearnContent({
+                  ...learnContent,
+                  introduction: e.target.value
+                })}
+                placeholder="Write an introduction for this topic..."
+              />
+            </Box>
+          )}
+
+          {activeTab === 1 && (
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                Main Content
+              </Typography>
+              <TextareaAutosize
+                minRows={8}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  borderRadius: '4px',
+                  border: '1px solid #ddd',
+                }}
+                value={learnContent.content}
+                onChange={(e) => setLearnContent({
+                  ...learnContent,
+                  content: e.target.value
+                })}
+                placeholder="Write the main content..."
+              />
+            </Box>
+          )}
+
+          {activeTab === 2 && (
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                Examples
+              </Typography>
+              <TextareaAutosize
+                minRows={4}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  borderRadius: '4px',
+                  border: '1px solid #ddd',
+                }}
+                value={learnContent.examples}
+                onChange={(e) => setLearnContent({
+                  ...learnContent,
+                  examples: e.target.value
+                })}
+                placeholder="Add examples..."
+              />
+            </Box>
+          )}
+
+          {activeTab === 3 && (
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                Practice Exercises
+              </Typography>
+              <TextareaAutosize
+                minRows={4}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  borderRadius: '4px',
+                  border: '1px solid #ddd',
+                }}
+                value={learnContent.practice}
+                onChange={(e) => setLearnContent({
+                  ...learnContent,
+                  practice: e.target.value
+                })}
+                placeholder="Add practice exercises..."
+              />
+            </Box>
+          )}
+
+          {activeTab === 4 && (
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                Summary
+              </Typography>
+              <TextareaAutosize
+                minRows={4}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  borderRadius: '4px',
+                  border: '1px solid #ddd',
+                }}
+                value={learnContent.summary}
+                onChange={(e) => setLearnContent({
+                  ...learnContent,
+                  summary: e.target.value
+                })}
+                placeholder="Write a summary..."
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenLearnDialog(false)}>Cancel</Button>
+          <Button onClick={handleLearnContentSave} variant="contained">
+            Save Content
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
 
-export default RoadmapCustomization; 
+export default RoadmapCustomization;

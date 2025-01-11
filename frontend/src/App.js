@@ -24,6 +24,7 @@ import VocabularyPractice from "./components/vocabulary/VocabularyPractice";
 import VocabularyTest from "./components/vocabulary/VocabularyTest";
 import RoadmapCustomization from './components/admin/RoadmapCustomization';
 import { RoadmapProvider } from './context/RoadmapContext';
+import LearnContent from './components/learn/LearnContent';
 
 function App() {
   // Get current path
@@ -37,6 +38,7 @@ function App() {
     "/communication",
     "/vocabulary",
     "/grammar",
+    "/learn",
   ].includes(path);
 
   return (
@@ -121,6 +123,15 @@ function App() {
                 <Route path="/vocabulary/test" element={<VocabularyTest />} />
    
                 <Route path="/grammar" element={<GrammarOptions />} />
+
+                <Route
+                  path="/learn/:nodeId"
+                  element={
+                    <ProtectedUserRoute>
+                      <LearnContent />
+                    </ProtectedUserRoute>
+                  }
+                />
               </Routes>
             </Container>
           </Box>
