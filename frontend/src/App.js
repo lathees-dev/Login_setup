@@ -25,6 +25,7 @@ import VocabularyTest from "./components/vocabulary/VocabularyTest";
 import RoadmapCustomization from './components/admin/RoadmapCustomization';
 import { RoadmapProvider } from './context/RoadmapContext';
 import LearnContent from './components/learn/LearnContent';
+import AdminLayout from './components/admin/AdminLayout';
 
 function App() {
   // Get current path
@@ -86,22 +87,10 @@ function App() {
                 />
 
                 {/* Protected Admin Routes */}
-                <Route
-                  path="/admin/dashboard"
-                  element={
-                    <ProtectedAdminRoute>
-                      <AdminDashboard />
-                    </ProtectedAdminRoute>
-                  }
-                />
-                <Route
-                  path="/admin/roadmap-customization"
-                  element={
-                    <ProtectedAdminRoute>
-                      <RoadmapCustomization />
-                    </ProtectedAdminRoute>
-                  }
-                />
+                <Route path="/admin" element={<ProtectedAdminRoute><AdminLayout /></ProtectedAdminRoute>}>
+                  <Route path="dashboard" element={<AdminDashboard />} />
+                  <Route path="roadmap-customization" element={<RoadmapCustomization />} />
+                </Route>
 
                 {/* Story Telling Routes */}
                 <Route path="/story-telling" element={<StoryTellingOptions />} />

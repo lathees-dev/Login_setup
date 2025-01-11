@@ -1,5 +1,3 @@
-
-
 from django.contrib import admin
 from django.urls import path, include
 from users import views
@@ -22,4 +20,7 @@ urlpatterns = [
     path('api/update-profile/', views.update_profile, name='update-profile'),
     # path('api/story-feedback/', views.story_feedback, name='story-feedback'),
     # path('api/chat-with-assistant/', views.chat_with_assistant, name='chat-with-assistant'),
+    path('stats/', views.get_user_stats, name='user-stats'),
+    path('all/', views.get_all_users, name='all-users'),
+    path('<int:user_id>/', views.delete_user, name='delete-user'),
 ]

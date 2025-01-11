@@ -1,5 +1,5 @@
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from django.http import JsonResponse
 from django.contrib.auth.hashers import check_password
@@ -21,6 +21,8 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 # from langchain_ollama.llms import OllamaLLM
 from langchain_core.prompts import ChatPromptTemplate
 import os
+from rest_framework.permissions import IsAdminUser
+from .serializers import UserSerializer
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -852,3 +854,41 @@ def chat_with_assistant(request):
     user_input = request.data.get("message", "")
     response = chat_with_bot(user_input)
     return Response({"response": response})
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def get_user_stats(request):
+    total_users = users_collection.count_documents({"user_type": "user"})
+    total_admins = admins_collection.count_documents({"user_type": "admin"})
+    return Response({
+        'totalUsers': total_users,
+        'totalAdmins': total_admins
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def get_all_users(request):
+    users = list(users_collection.find({"user_type": "user"}))
+    admins = list(admins_collection.find({"user_type": "admin"}))
+    
+    for user in users + admins:
+        user['id'] = str(user['_id'])
+        del user['_id']
+    
+    return Response(users + admins)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAdminUser])
+def delete_user(request, user_id):
+    try:
+        result = users_collection.delete_one({"_id": ObjectId(user_id)})
+        if result.deleted_count == 0:
+            result = admins_collection.delete_one({"_id": ObjectId(user_id)})
+            if result.deleted_count == 0:
+                return Response({'error': 'User not found'}, status=404)
+        return Response({'message': 'User deleted successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)

@@ -1,9 +1,20 @@
+from django.db import models
+from django.contrib.auth.models import AbstractUser
 from datetime import datetime, timedelta
 import random
 from .mongodb import users_collection, admins_collection
 from django.contrib.auth.hashers import make_password
 
-class CustomUser:
+class CustomUser(models.Model):
+    name = models.CharField(max_length=255)
+    email = models.EmailField(unique=True)
+    password = models.CharField(max_length=255)
+    user_type = models.CharField(max_length=10)  # 'user' or 'admin'
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'users'  # This will match your MongoDB collection
+
     @staticmethod
     def create_user(name, email, mobile_number, password, user_type='user'):
         user = {
