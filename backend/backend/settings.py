@@ -109,3 +109,9 @@ CACHES = {
 # Add these settings for media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Add these MongoDB settings to your settings.py
+
+# MongoDB Configuration
+MONGODB_URI = "mongodb+srv://sutgJxLaXWo7gKMR:sutgJxLaXWo7gKMR@cluster0.2ytii.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+MONGODB_NAME = "login_system"

@@ -1,81 +1,54 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import axios from '../config/axios';
 
 const RoadmapContext = createContext();
 
-// Add the default nodes here so both components can access the same initial data
-const defaultRoadmapNodes = [
-  {
-    id: 1,
-    title: "Introduction to Communication",
-    completed: true,
-    stars: 3,
-    position: "left",
-    link: "/learn/1",
-    locked: false,
-    isTest: false,
-    learnContent: {
-      introduction: '',
-      content: '',
-      examples: '',
-      practice: '',
-      summary: '',
-    }
-  },
-  {
-    id: 2,
-    title: "Grammar / Sentence Framing",
-    completed: true,
-    stars: 2,
-    position: "right",
-    link: "/learn/2",
-    locked: false,
-    isTest: false,
-    learnContent: {
-      introduction: '',
-      content: '',
-      examples: '',
-      practice: '',
-      summary: '',
-    }
-  },
-  {
-    id: 3,
-    title: "Vocabulary Development",
-    completed: false,
-    stars: 0,
-    position: "left",
-    link: "/learn/3",
-    locked: false,
-    isTest: false,
-    learnContent: {
-      introduction: '',
-      content: '',
-      examples: '',
-      practice: '',
-      summary: '',
-    }
-  },
-  // ... add all other default nodes
-];
-
 export const RoadmapProvider = ({ children }) => {
-  // Initialize state with data from localStorage or default nodes
-  const [roadmapNodes, setRoadmapNodes] = useState(() => {
-    const savedNodes = localStorage.getItem('roadmapNodes');
-    return savedNodes ? JSON.parse(savedNodes) : defaultRoadmapNodes;
-  });
+  const [roadmapNodes, setRoadmapNodes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Update localStorage whenever roadmapNodes changes
+  const fetchRoadmapNodes = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('/api/roadmap/');
+      setRoadmapNodes(response.data);
+      setError(null);
+    } catch (error) {
+      console.error('Error fetching roadmap:', error);
+      setError('Failed to load roadmap');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    localStorage.setItem('roadmapNodes', JSON.stringify(roadmapNodes));
-  }, [roadmapNodes]);
+    fetchRoadmapNodes();
+  }, []);
 
-  const updateRoadmap = (newNodes) => {
-    setRoadmapNodes(newNodes);
+  const updateRoadmap = async (newNodes) => {
+    try {
+      setLoading(true);
+      await axios.post('/api/roadmap/save/', newNodes);
+      await fetchRoadmapNodes(); // Refresh the nodes after saving
+      return true;
+    } catch (error) {
+      console.error('Error saving roadmap:', error);
+      setError('Failed to save roadmap');
+      return false;
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <RoadmapContext.Provider value={{ roadmapNodes, updateRoadmap }}>
+    <RoadmapContext.Provider value={{ 
+      roadmapNodes, 
+      updateRoadmap, 
+      loading,
+      error,
+      refreshRoadmap: fetchRoadmapNodes 
+    }}>
       {children}
     </RoadmapContext.Provider>
   );

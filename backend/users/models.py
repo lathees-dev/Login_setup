@@ -2,8 +2,9 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from datetime import datetime, timedelta
 import random
-from .mongodb import users_collection, admins_collection
+from .mongodb import users_collection, admins_collection ,db, roadmap_collection
 from django.contrib.auth.hashers import make_password
+from bson import ObjectId
 
 class CustomUser(models.Model):
     name = models.CharField(max_length=255)
@@ -66,3 +67,75 @@ class CustomUser(models.Model):
                 }
             }
         )
+
+class RoadmapNode:
+    @staticmethod
+    def save_roadmap(nodes):
+        try:
+            # Convert nodes to proper format before saving
+            formatted_nodes = []
+            for node in nodes:
+                formatted_node = {
+                    'title': str(node.get('title', '')),
+                    'position': str(node.get('position', 'left')),
+                    'locked': bool(node.get('locked', False)),
+                    'isTest': bool(node.get('isTest', False)),
+                    'link': str(node.get('link', '')),
+                    'completed': bool(node.get('completed', False)),
+                    'stars': int(node.get('stars', 0)),
+                    'learnContent': {
+                        'introduction': str(node.get('learnContent', {}).get('introduction', '')),
+                        'content': str(node.get('learnContent', {}).get('content', '')),
+                        'examples': str(node.get('learnContent', {}).get('examples', '')),
+                        'practice': str(node.get('learnContent', {}).get('practice', '')),
+                        'summary': str(node.get('learnContent', {}).get('summary', ''))
+                    }
+                }
+                if 'id' in node:
+                    formatted_node['id'] = int(node['id'])
+                formatted_nodes.append(formatted_node)
+            
+            # Clear existing nodes and insert new ones
+            roadmap_collection.delete_many({})
+            if formatted_nodes:
+                roadmap_collection.insert_many(formatted_nodes)
+            return True
+        except Exception as e:
+            print(f"Error saving roadmap: {str(e)}")  # For debugging
+            return False
+
+    @staticmethod
+    def get_roadmap():
+        try:
+            nodes = list(roadmap_collection.find({}))
+            if not nodes:
+                default_nodes = [{
+                    'id': 1,
+                    'title': 'Introduction to Communication',
+                    'position': 'left',
+                    'locked': False,
+                    'isTest': False,
+                    'link': '/learn/1',
+                    'completed': False,
+                    'stars': 0,
+                    'learnContent': {
+                        'introduction': '',
+                        'content': '',
+                        'examples': '',
+                        'practice': '',
+                        'summary': ''
+                    }
+                }]
+                roadmap_collection.insert_many(default_nodes)
+                return default_nodes
+
+            # Convert ObjectId to string and ensure consistent ID format
+            for node in nodes:
+                if '_id' in node:
+                    del node['_id']  # Remove MongoDB's _id
+                if 'id' not in node:
+                    node['id'] = 1  # Provide default ID if missing
+            return nodes
+        except Exception as e:
+            print(f"Error getting roadmap: {str(e)}")  # For debugging
+            return []

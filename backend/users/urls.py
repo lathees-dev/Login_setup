@@ -23,4 +23,6 @@ urlpatterns = [
     path('stats/', views.get_user_stats, name='user-stats'),
     path('all/', views.get_all_users, name='all-users'),
     path('<int:user_id>/', views.delete_user, name='delete-user'),
+    path('api/roadmap/', views.get_roadmap, name='get-roadmap'),
+    path('api/roadmap/save/', views.save_roadmap, name='save-roadmap'),
 ]
