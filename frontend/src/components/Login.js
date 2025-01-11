@@ -33,7 +33,7 @@ const Login = () => {
       // Clear any existing data
       localStorage.removeItem("userInfo");
 
-      const response = await fetch("http://localhost:8000/users/api/login/", {
+      const response = await fetch("/api/login/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
