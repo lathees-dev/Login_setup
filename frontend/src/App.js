@@ -22,10 +22,13 @@ import VocabularyOptions from "./components/vocabulary/VocabularyOptions";
 import GrammarOptions from "./components/grammar/GrammarOptions";
 import VocabularyPractice from "./components/vocabulary/VocabularyPractice";
 import VocabularyTest from "./components/vocabulary/VocabularyTest";
-import RoadmapCustomization from './components/admin/RoadmapCustomization';
-import { RoadmapProvider } from './context/RoadmapContext';
-import LearnContent from './components/learn/LearnContent';
-import AdminLayout from './components/admin/AdminLayout';
+import RoadmapCustomization from "./components/admin/RoadmapCustomization";
+import { RoadmapProvider } from "./context/RoadmapContext";
+import LearnContent from "./components/learn/LearnContent";
+import AdminLayout from "./components/admin/AdminLayout";
+import VideoUpload from "./components/videoResume/VideoUpload";
+import VideoResults from "./components/videoResume/VideoResults";
+import VideoResumeOptions from "./components/videoResume/VideoResumeOptions";
 
 function App() {
   // Get current path
@@ -87,13 +90,26 @@ function App() {
                 />
 
                 {/* Protected Admin Routes */}
-                <Route path="/admin" element={<ProtectedAdminRoute><AdminLayout /></ProtectedAdminRoute>}>
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedAdminRoute>
+                      <AdminLayout />
+                    </ProtectedAdminRoute>
+                  }
+                >
                   <Route path="dashboard" element={<AdminDashboard />} />
-                  <Route path="roadmap-customization" element={<RoadmapCustomization />} />
+                  <Route
+                    path="roadmap-customization"
+                    element={<RoadmapCustomization />}
+                  />
                 </Route>
 
                 {/* Story Telling Routes */}
-                <Route path="/story-telling" element={<StoryTellingOptions />} />
+                <Route
+                  path="/story-telling"
+                  element={<StoryTellingOptions />}
+                />
                 <Route
                   path="/story-telling/practice"
                   element={<StoryTelling />}
@@ -106,11 +122,17 @@ function App() {
                   path="/story-telling/test"
                   element={<StoryTellingTest />}
                 />
-                <Route path="/communication" element={<CommunicationOptions />} />
+                <Route
+                  path="/communication"
+                  element={<CommunicationOptions />}
+                />
                 <Route path="/vocabulary" element={<VocabularyOptions />} />
-                <Route path="/vocabulary/VocabularyPractice" element={<VocabularyPractice />} />
+                <Route
+                  path="/vocabulary/VocabularyPractice"
+                  element={<VocabularyPractice />}
+                />
                 <Route path="/vocabulary/test" element={<VocabularyTest />} />
-   
+
                 <Route path="/grammar" element={<GrammarOptions />} />
 
                 <Route
@@ -121,6 +143,13 @@ function App() {
                     </ProtectedUserRoute>
                   }
                 />
+
+                <Route path="/videoResume/upload" element={<VideoUpload />} />
+                <Route
+                  path="/videoResume/results/:resume_transcription_id"
+                  element={<VideoResults />}
+                />
+                <Route path="/videoResume" element={<VideoResumeOptions />} />
               </Routes>
             </Container>
           </Box>

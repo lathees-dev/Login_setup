@@ -22,7 +22,7 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { motion } from "framer-motion";
-import { useRoadmap } from '../context/RoadmapContext';
+import { useRoadmap } from "../context/RoadmapContext";
 
 const PageContainer = styled(Box)({
   minHeight: "100vh",
@@ -445,7 +445,8 @@ const UserHome = () => {
                 strokeDasharray="1000"
                 strokeDashoffset={
                   1000 -
-                  (1000 * roadmapNodes.filter((item) => item.completed).length) /
+                  (1000 *
+                    roadmapNodes.filter((item) => item.completed).length) /
                     roadmapNodes.length
                 }
               />

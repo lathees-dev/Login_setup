@@ -8,7 +8,8 @@ urlpatterns = [
     path("", include("users.urls")),
     path("storytelling/", include("storyTelling.urls", namespace="storyTelling")),
     path("api/", include("admin_portal.urls")),
-    path('communication/', include('communication.urls', namespace='communication')),
-    path('vocabulary/', include('vocabulary.urls', namespace='vocabulary')),
-    path('grammar/', include('grammar.urls', namespace='grammar')),
+    path("communication/", include("communication.urls", namespace="communication")),
+    path("vocabulary/", include("vocabulary.urls", namespace="vocabulary")),
+    path("grammar/", include("grammar.urls", namespace="grammar")),
+    path("videoResume/", include("videoResume.urls", namespace="videoResume")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
