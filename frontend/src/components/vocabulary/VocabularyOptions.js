@@ -15,7 +15,6 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SchoolIcon from '@mui/icons-material/School';
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
 import AssignmentIcon from '@mui/icons-material/Assignment';
-import { path } from 'framer-motion/client';
 
 const OptionCard = styled(Card)(({ theme }) => ({
     height: '200px',

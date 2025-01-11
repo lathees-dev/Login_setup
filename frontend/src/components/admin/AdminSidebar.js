@@ -20,7 +20,7 @@ const AdminSidebar = () => {
 
   const menuItems = [
     { text: "Dashboard", icon: <DashboardIcon />, path: "/admin/dashboard" },
-    { text: "Customize Roadmap", icon: <EditIcon />, path: "/admin/roadmap" },
+    { text: "Customize Roadmap", icon: <EditIcon />, path: "/admin/roadmap-customization" },
   ];
 
   const handleLogout = () => {

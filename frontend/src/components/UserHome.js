@@ -16,12 +16,13 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import StarIcon from "@mui/icons-material/Star";
 import LockIcon from "@mui/icons-material/Lock";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
-import { motion } from "framer-motion";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 import HomeIcon from "@mui/icons-material/Home";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import LogoutIcon from "@mui/icons-material/Logout";
+import { motion } from "framer-motion";
+import { useRoadmap } from '../context/RoadmapContext';
 
 const PageContainer = styled(Box)({
   minHeight: "100vh",
@@ -202,163 +203,6 @@ const nodeVariants = {
   hover: { scale: 1.1 },
 };
 
-const roadmapData = [
-  {
-    id: 1,
-    title: "Introduction to Communication",
-    completed: true,
-    stars: 3,
-    position: "left",
-    link: "/communication",
-  },
-  {
-    id: 2,
-    title: "Grammar / Sentence Framing",
-    completed: true,
-    stars: 2,
-    position: "right",
-    link: "/grammar",
-  },
-  {
-    id: 3,
-    title: "Vocabulary Development",
-    completed: false,
-    stars: 0,
-    position: "left",
-    link: "/vocabulary",
-  },
-  {
-    id: 4,
-    title: "Conversational Skills",
-    completed: false,
-    locked: true,
-    position: "right",
-  },
-  {
-    id: 5,
-    title: "Scenario based self intro",
-    locked: true,
-    position: "left",
-  },
-  {
-    id: 6,
-    title: "Storytelling Techniques",
-    locked: false,
-    position: "right",
-    link: "/story-telling",
-  },
-  {
-    id: 7,
-    title: "Public Speaking Basics",
-    locked: true,
-    position: "left",
-  },
-  {
-    id: 8,
-    title: "Self Intro Basics",
-    locked: true,
-    position: "right",
-  },
-  {
-    id: 9,
-    title: "Video Resume Creation",
-    locked: true,
-    position: "left",
-    link: "/video-resume",
-  },
-  {
-    id: 10,
-    title: "Group Discussion Skills",
-    locked: true,
-    position: "right",
-  },
-  {
-    id: 11,
-    title: "Debate Basics",
-    locked: true,
-    position: "left",
-  },
-  {
-    id: 12,
-    title: "Written Communication",
-    locked: true,
-    position: "right",
-  },
-  {
-    id: 13,
-    title: "Networking Etiquette",
-    locked: true,
-    position: "left",
-  },
-  {
-    id: 14,
-    title: "LinkedIn Training",
-    locked: true,
-    position: "right",
-  },
-  {
-    id: 15,
-    title: "Personal Presentation",
-    locked: true,
-    position: "left",
-  },
-  {
-    id: 16,
-    title: "Memory Activities",
-    locked: true,
-    position: "right",
-  },
-  {
-    id: 17,
-    title: "Personal Branding",
-    locked: true,
-    position: "left",
-  },
-  {
-    id: 18,
-    title: "Resume Creation",
-    locked: true,
-    position: "right",
-  },
-  {
-    id: 19,
-    title: "Presentation Skills",
-    locked: true,
-    position: "left",
-  },
-  {
-    id: 20,
-    title: "BMC Pitching",
-    locked: true,
-    position: "right",
-  },
-  {
-    id: 21,
-    title: "Mock Interview",
-    locked: true,
-    position: "left",
-  },
-  {
-    id: 22,
-    title: "Speed Networking",
-    locked: true,
-    position: "right",
-  },
-  {
-    id: 23,
-    title: "Speed Interview",
-    locked: true,
-    position: "left",
-  },
-  {
-    id: 24,
-    title: "Final Test",
-    isTest: true,
-    locked: true,
-    position: "right",
-  },
-];
-
 const Sidebar = styled(Drawer)(({ open }) => ({
   "& .MuiDrawer-paper": {
     width: open ? 240 : 70,
@@ -474,6 +318,7 @@ const renderNode = (item, index, totalNodes, navigate) => (
 );
 
 const UserHome = () => {
+  const { roadmapNodes } = useRoadmap();
   const [user, setUser] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const navigate = useNavigate();
@@ -587,23 +432,23 @@ const UserHome = () => {
           <RoadmapContainer>
             <PathSvg>
               <PathLine
-                d={generatePathData(roadmapData)}
+                d={generatePathData(roadmapNodes)}
                 stroke="rgba(0, 0, 0, 0.1)"
               />
               <PathLine
-                d={generatePathData(roadmapData)}
+                d={generatePathData(roadmapNodes)}
                 stroke="#58CC02"
                 strokeDasharray="1000"
                 strokeDashoffset={
                   1000 -
-                  (1000 * roadmapData.filter((item) => item.completed).length) /
-                    roadmapData.length
+                  (1000 * roadmapNodes.filter((item) => item.completed).length) /
+                    roadmapNodes.length
                 }
               />
             </PathSvg>
             <NodesContainer>
-              {roadmapData.map((item, index) =>
-                renderNode(item, index, roadmapData.length, navigate)
+              {roadmapNodes.map((item, index) =>
+                renderNode(item, index, roadmapNodes.length, navigate)
               )}
             </NodesContainer>
           </RoadmapContainer>

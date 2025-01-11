@@ -1,299 +1,334 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from 'react';
 import {
   Box,
-  Button,
-  Dialog,
-  IconButton,
   Typography,
   Paper,
-  CircularProgress,
-} from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
-import AddIcon from "@mui/icons-material/Add";
-import EditIcon from "@mui/icons-material/Edit";
-import ModuleForm from "./ModuleForm";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { styled } from "@mui/material/styles";
-
-// Styled components for the roadmap visualization
-const RoadmapContainer = styled(Box)({
-  position: "relative",
-  maxWidth: "1200px",
-  margin: "0 auto",
-  padding: "2rem",
-  minHeight: "600px",
-});
-
-const ModuleNode = styled(Paper)(({ completed }) => ({
-  width: "180px",
-  height: "180px",
-  borderRadius: "50%",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  position: "relative",
-  backgroundColor: completed ? "#e3f2fd" : "#f5f5f5",
-  cursor: "grab",
-  transition: "transform 0.2s, box-shadow 0.2s",
-  "&:hover": {
-    transform: "scale(1.05)",
-    boxShadow: "0 8px 16px rgba(0,0,0,0.2)",
-  },
-}));
-
-const ConnectingLine = styled("div")({
-  position: "absolute",
-  height: "4px",
-  backgroundColor: "#bdbdbd",
-  transform: "rotate(45deg)",
-  transformOrigin: "0 0",
-  zIndex: -1,
-});
+  List,
+  ListItem,
+  IconButton,
+  TextField,
+  Button,
+  Switch,
+  FormControlLabel,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Rating,
+} from '@mui/material';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import StarIcon from '@mui/icons-material/Star';
+import SchoolIcon from '@mui/icons-material/School';
+import { useRoadmap } from '../../context/RoadmapContext';
 
 const RoadmapCustomization = () => {
-  const [modules, setModules] = useState([]);
-  const [openForm, setOpenForm] = useState(false);
-  const [editingModule, setEditingModule] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { roadmapNodes, updateRoadmap } = useRoadmap();
+  const [openDialog, setOpenDialog] = useState(false);
+  const [editingNode, setEditingNode] = useState(null);
+  const [newNode, setNewNode] = useState({
+    title: '',
+    position: 'left',
+    locked: false,
+    isTest: false,
+    link: '',
+    completed: false,
+    stars: 0,
+  });
 
-  useEffect(() => {
-    fetchModules();
-  }, []);
-
-  const fetchModules = async () => {
-    try {
-      const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-      const response = await fetch("/api/admin/modules/", {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${userInfo?.token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setModules(data);
-    } catch (error) {
-      console.error("Error fetching modules:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDragEnd = async (result) => {
+  const handleDragEnd = (result) => {
     if (!result.destination) return;
 
-    const items = Array.from(modules);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
+    const sourceIndex = result.source.index;
+    const destinationIndex = result.destination.index;
 
-    setModules(items);
+    const reorderedNodes = Array.from(roadmapNodes);
+    const [removed] = reorderedNodes.splice(sourceIndex, 1);
+    reorderedNodes.splice(destinationIndex, 0, removed);
 
-    try {
-      const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-      const positions = {};
-      items.forEach((item, index) => {
-        positions[item.id] = index + 1;
+    updateRoadmap(reorderedNodes);
+  };
+
+  const handleOpenDialog = (node = null) => {
+    if (node) {
+      setEditingNode(node);
+      setNewNode(node);
+    } else {
+      setEditingNode(null);
+      setNewNode({
+        title: '',
+        position: 'left',
+        locked: false,
+        isTest: false,
+        link: '',
+        completed: false,
+        stars: 0,
       });
-
-      await fetch("/api/admin/modules/update-positions/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${userInfo?.token}`,
-        },
-        body: JSON.stringify(positions),
-      });
-    } catch (error) {
-      console.error("Error updating positions:", error);
     }
+    setOpenDialog(true);
   };
 
-  const handleDelete = async (moduleId) => {
-    try {
-      const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-      await fetch(`/api/admin/modules/${moduleId}/`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${userInfo?.token}`,
-        },
-      });
-      fetchModules();
-    } catch (error) {
-      console.error("Error deleting module:", error);
-    }
-  };
-
-  const calculateNodePosition = (index, totalNodes) => {
-    const radius = 300; // Adjust based on your container size
-    const angle = (index / totalNodes) * Math.PI * 2;
-    const x = radius * Math.cos(angle) + radius;
-    const y = radius * Math.sin(angle) + radius;
-    return { x, y };
-  };
-
-  const renderConnectingLines = () => {
-    return modules.map((module, index) => {
-      if (index === modules.length - 1) return null;
-
-      const start = calculateNodePosition(index, modules.length);
-      const end = calculateNodePosition(index + 1, modules.length);
-
-      const length = Math.sqrt(
-        Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2)
-      );
-      const angle = Math.atan2(end.y - start.y, end.x - start.x);
-
-      return (
-        <ConnectingLine
-          key={`line-${index}`}
-          style={{
-            width: `${length}px`,
-            left: `${start.x}px`,
-            top: `${start.y}px`,
-            transform: `rotate(${angle}rad)`,
-          }}
-        />
-      );
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setEditingNode(null);
+    setNewNode({
+      title: '',
+      position: 'left',
+      locked: false,
+      isTest: false,
+      link: '',
+      completed: false,
+      stars: 0,
     });
   };
 
-  if (loading) {
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="400px"
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
+  const handleSaveNode = async () => {
+    try {
+      if (editingNode) {
+        const updatedNodes = roadmapNodes.map(node => 
+          node.id === editingNode.id ? { ...newNode, id: node.id } : node
+        );
+        updateRoadmap(updatedNodes);
+      } else {
+        const newId = Math.max(...roadmapNodes.map(n => n.id)) + 1;
+        const updatedNodes = [...roadmapNodes, { ...newNode, id: newId }];
+        updateRoadmap(updatedNodes);
+      }
+      handleCloseDialog();
+    } catch (error) {
+      console.error('Error saving node:', error);
+    }
+  };
+
+  const handleDeleteNode = async (nodeId) => {
+    if (window.confirm('Are you sure you want to delete this node?')) {
+      try {
+        const updatedNodes = roadmapNodes.filter(node => node.id !== nodeId);
+        updateRoadmap(updatedNodes);
+      } catch (error) {
+        console.error('Error deleting node:', error);
+      }
+    }
+  };
+
+  const handleLearnTemplate = (nodeId) => {
+    console.log('Opening learn template for node:', nodeId);
+  };
 
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h4">Customize Roadmap</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+        <Typography variant="h4">Roadmap Customization</Typography>
         <Button
-          startIcon={<AddIcon />}
           variant="contained"
-          onClick={() => setOpenForm(true)}
+          startIcon={<AddIcon />}
+          onClick={() => handleOpenDialog()}
         >
-          Add Module
+          Add New Node
         </Button>
       </Box>
 
-      <RoadmapContainer>
-        {renderConnectingLines()}
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="roadmap">
-            {(provided) => (
-              <Box {...provided.droppableProps} ref={provided.innerRef}>
-                {modules.map((module, index) => {
-                  const position = calculateNodePosition(index, modules.length);
-                  return (
-                    <Draggable
-                      key={module.id}
-                      draggableId={module.id.toString()}
-                      index={index}
-                    >
-                      {(provided) => (
-                        <ModuleNode
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          style={{
-                            ...provided.draggableProps.style,
-                            position: "absolute",
-                            left: position.x - 90,
-                            top: position.y - 90,
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Paper sx={{ p: 2 }}>
+          <Droppable droppableId="droppable-roadmap-nodes">
+            {(provided, snapshot) => (
+              <List
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                sx={{ 
+                  minHeight: '100px',
+                  bgcolor: 'background.paper',
+                }}
+              >
+                {roadmapNodes.map((node, index) => (
+                  <Draggable
+                    key={node.id.toString()}
+                    draggableId={`draggable-${node.id.toString()}`}
+                    index={index}
+                  >
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        style={{
+                          ...provided.draggableProps.style,
+                          marginBottom: '8px'
+                        }}
+                      >
+                        <ListItem
+                          sx={{
+                            border: '1px solid #e0e0e0',
+                            borderRadius: 1,
+                            backgroundColor: snapshot.isDragging 
+                              ? '#e3f2fd' 
+                              : node.isTest 
+                                ? '#fff3e0' 
+                                : 'background.paper',
+                            '&:hover': {
+                              backgroundColor: '#f5f5f5',
+                            },
                           }}
-                          completed={!module.is_locked}
                         >
-                          <Typography variant="h6" align="center">
-                            {module.title}
-                          </Typography>
-                          <Box sx={{ mt: 2 }}>
-                            <IconButton
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingModule(module);
-                                setOpenForm(true);
-                              }}
+                          <Box
+                            {...provided.dragHandleProps}
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              cursor: 'move',
+                              mr: 2,
+                              '&:active': {
+                                cursor: 'grabbing',
+                              },
+                            }}
+                          >
+                            <DragIndicatorIcon color="action" />
+                          </Box>
+
+                          <Box sx={{ flexGrow: 1 }}>
+                            <Typography variant="subtitle1">{node.title}</Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
+                              <Typography variant="body2" color="textSecondary">
+                                Position: {node.position}
+                              </Typography>
+                              <Typography variant="body2" color="textSecondary">
+                                {node.locked ? 'Locked' : 'Unlocked'}
+                              </Typography>
+                              <Typography variant="body2" color="textSecondary">
+                                {node.isTest ? 'Test Node' : 'Regular Node'}
+                              </Typography>
+                              <Rating
+                                value={node.stars}
+                                readOnly
+                                icon={<StarIcon fontSize="small" />}
+                                emptyIcon={<StarIcon fontSize="small" />}
+                              />
+                            </Box>
+                            {node.link && (
+                              <Typography variant="body2" color="primary">
+                                Link: {node.link}
+                              </Typography>
+                            )}
+                          </Box>
+
+                          <Box sx={{ display: 'flex', gap: 1, ml: 'auto' }}>
+                            <IconButton 
+                              onClick={() => handleLearnTemplate(node.id)}
                               size="small"
+                              color="primary"
+                              title="Update Learn Template"
+                            >
+                              <SchoolIcon />
+                            </IconButton>
+                            <IconButton 
+                              onClick={() => handleOpenDialog(node)}
+                              size="small"
+                              title="Edit Node"
                             >
                               <EditIcon />
                             </IconButton>
-                            <IconButton
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDelete(module.id);
-                              }}
+                            <IconButton 
+                              onClick={() => handleDeleteNode(node.id)}
                               size="small"
+                              color="error"
+                              title="Delete Node"
                             >
                               <DeleteIcon />
                             </IconButton>
                           </Box>
-                        </ModuleNode>
-                      )}
-                    </Draggable>
-                  );
-                })}
+                        </ListItem>
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
                 {provided.placeholder}
-              </Box>
+              </List>
             )}
           </Droppable>
-        </DragDropContext>
-      </RoadmapContainer>
+        </Paper>
+      </DragDropContext>
 
-      <Dialog
-        open={openForm}
-        onClose={() => {
-          setOpenForm(false);
-          setEditingModule(null);
-        }}
-        maxWidth="md"
-        fullWidth
-      >
-        <ModuleForm
-          module={editingModule}
-          onClose={() => {
-            setOpenForm(false);
-            setEditingModule(null);
-          }}
-          onSubmit={async (data) => {
-            try {
-              const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-              const method = editingModule ? "PUT" : "POST";
-              const url = editingModule
-                ? `/api/admin/modules/${editingModule.id}/`
-                : "/api/admin/modules/";
-
-              await fetch(url, {
-                method,
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${userInfo?.token}`,
-                },
-                body: JSON.stringify(data),
-              });
-
-              fetchModules();
-              setOpenForm(false);
-              setEditingModule(null);
-            } catch (error) {
-              console.error("Error saving module:", error);
-            }
-          }}
-        />
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {editingNode ? 'Edit Roadmap Node' : 'Add New Roadmap Node'}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+            <TextField
+              label="Title"
+              value={newNode.title}
+              onChange={(e) => setNewNode({ ...newNode, title: e.target.value })}
+              fullWidth
+            />
+            <FormControl fullWidth>
+              <InputLabel>Position</InputLabel>
+              <Select
+                value={newNode.position}
+                onChange={(e) => setNewNode({ ...newNode, position: e.target.value })}
+                label="Position"
+              >
+                <MenuItem value="left">Left</MenuItem>
+                <MenuItem value="right">Right</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              label="Link"
+              value={newNode.link}
+              onChange={(e) => setNewNode({ ...newNode, link: e.target.value })}
+              fullWidth
+            />
+            <Rating
+              value={newNode.stars}
+              onChange={(event, newValue) => {
+                setNewNode({ ...newNode, stars: newValue });
+              }}
+              icon={<StarIcon fontSize="small" />}
+              emptyIcon={<StarIcon fontSize="small" />}
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={newNode.locked}
+                  onChange={(e) => setNewNode({ ...newNode, locked: e.target.checked })}
+                />
+              }
+              label="Locked"
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={newNode.isTest}
+                  onChange={(e) => setNewNode({ ...newNode, isTest: e.target.checked })}
+                />
+              }
+              label="Test Node"
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={newNode.completed}
+                  onChange={(e) => setNewNode({ ...newNode, completed: e.target.checked })}
+                />
+              }
+              label="Completed"
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleSaveNode} variant="contained">
+            Save
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );
 };
 
-export default RoadmapCustomization;
+export default RoadmapCustomization; 
