@@ -37,7 +37,7 @@ const VideoResumeOptions = () => {
       title: "Learn",
       description: "Learn the fundamentals of Video Resume",
       icon: <SchoolIcon sx={{ fontSize: "4rem" }} />,
-      path: "",
+      path: "/learn/1",
     },
     {
       title: "Practice",
